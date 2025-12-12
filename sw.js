@@ -1,9 +1,20 @@
-const CACHE_NAME = 'xmas-exchange-v1';
+const CACHE_NAME = 'xmas-exchange-v2';
 const urlsToCache = [
   './',
   './index.html',
   './manifest.json',
-  './icon.jpg'
+  './icon.jpg',
+  // 男生圖片
+  './boy_a.jpg',
+  './boy_b.jpg',
+  './boy_c.jpg',
+  './boy_d.jpg',
+  // 女生圖片
+  './girl_a.jpg',
+  './girl_b.jpg',
+  './girl_c.jpg',
+  './girl_d.jpg',
+  './girl_e.jpg'
 ];
 
 self.addEventListener('install', event => {
@@ -22,5 +33,20 @@ self.addEventListener('fetch', event => {
         }
         return fetch(event.request);
       })
+  );
+});
+
+// 清除舊版本的快取
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cacheName => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
   );
 });
