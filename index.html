@@ -16,23 +16,23 @@
 
         /* --- 核心動畫區 --- */
 
-        /* 1. 麋鹿獸被打倒 */
+        /* 1. 麋鹿獸被打倒 (哭著飛走) */
         .monster-die { animation: monsterDie 1.5s forwards ease-in-out; }
         @keyframes monsterDie {
             0% { transform: scale(1); filter: none; }
-            10%, 30% { transform: translate(-10px, 0) rotate(-5deg); filter: brightness(2) sepia(1) saturate(5); }
+            10%, 30% { transform: translate(-10px, 0) rotate(-5deg); filter: brightness(1.2); }
             20%, 40% { transform: translate(10px, 0) rotate(5deg); }
             100% { transform: scale(0) rotate(720deg) translateY(-800px); opacity: 0; }
         }
 
-        /* 2. 麋鹿獸攻擊 (留在原地變兇) */
+        /* 2. 麋鹿獸攻擊 (生氣留在原地) */
         .monster-attack-stay { animation: monsterAttackStay 0.8s forwards cubic-bezier(0.25, 1, 0.5, 1); }
         @keyframes monsterAttackStay {
             0% { transform: scale(1) translateY(0); filter: none; }
             40% { transform: scale(0.9) translateY(-10px); } /* 蓄力 */
             100% { 
-                transform: scale(1.25) translateY(20px); 
-                filter: drop-shadow(0 0 20px red) brightness(1.2) contrast(1.2); 
+                transform: scale(1.3) translateY(40px); /* 往前壓迫 */
+                filter: drop-shadow(0 0 20px red) brightness(1.1); 
                 z-index: 30; 
             }
         }
@@ -45,8 +45,6 @@
         }
 
         /* --- 英雄的 5 種死法 --- */
-
-        /* 死法 A: 被打飛 */
         .hero-fly-away { animation: heroFly 1.2s forwards ease-in; }
         @keyframes heroFly {
             0% { transform: scale(1) rotate(0); opacity: 1; }
@@ -54,7 +52,6 @@
             100% { transform: scale(0) rotate(1080deg) translate(500px, -500px); opacity: 0; }
         }
 
-        /* 死法 B: 漸漸消失 */
         .hero-dead { animation: heroDead 1.5s forwards ease-out; }
         @keyframes heroDead {
             0% { transform: scale(1); filter: none; opacity: 1; }
@@ -63,7 +60,6 @@
             100% { transform: rotate(90deg) translateY(50px); filter: grayscale(1); opacity: 0; }
         }
 
-        /* 死法 C: 被踩扁 (Flatten) */
         .hero-flatten { animation: heroFlatten 0.4s forwards cubic-bezier(0.25, 1, 0.5, 1); }
         @keyframes heroFlatten {
             0% { transform: scale(1, 1); opacity: 1; }
@@ -71,22 +67,19 @@
             100% { transform: scale(2, 0.05) translateY(100px); filter: brightness(0); opacity: 0.5; }
         }
 
-        /* 死法 D: 黑洞吸入 (Spiral) */
         .hero-spiral { animation: heroSpiral 1s forwards ease-in; }
         @keyframes heroSpiral {
             0% { transform: scale(1) rotate(0); opacity: 1; }
             100% { transform: scale(0) rotate(720deg); filter: contrast(200%); opacity: 0; }
         }
 
-        /* 死法 E: 掉進深淵 (Drop) */
         .hero-drop { animation: heroDrop 0.8s forwards ease-in; }
         @keyframes heroDrop {
             0% { transform: translateY(0) rotate(0); opacity: 1; }
-            20% { transform: translateY(-30px) rotate(-5deg); } /* 彈一下 */
+            20% { transform: translateY(-30px) rotate(-5deg); }
             100% { transform: translateY(1000px) rotate(45deg); opacity: 0; }
         }
 
-        /* 6. 特效 Emoji */
         .effect-hit { animation: effectHit 0.6s forwards; z-index: 60; }
         @keyframes effectHit {
             0% { transform: scale(0) rotate(-45deg); opacity: 0; }
@@ -94,7 +87,6 @@
             100% { transform: scale(1.5); opacity: 0; }
         }
         
-        /* 緊張顫抖 */
         .shake-light { animation: shakeLight 0.2s infinite; }
         @keyframes shakeLight { 0% { transform: translate(1px, 0); } 50% { transform: translate(-1px, 0); } 100% { transform: translate(0, 0); } }
 
@@ -262,7 +254,7 @@
         gainNode.connect(audioCtx.destination);
         const now = audioCtx.currentTime;
 
-        if (type === 'attack') { // 緊張氣氛/蓄力
+        if (type === 'attack') { 
             osc.type = 'sawtooth';
             osc.frequency.setValueAtTime(100, now);
             osc.frequency.linearRampToValueAtTime(50, now + 0.5);
@@ -270,7 +262,7 @@
             gainNode.gain.linearRampToValueAtTime(0, now + 0.5);
             osc.start(now);
             osc.stop(now + 0.5);
-        } else if (type === 'hit') { // 撞擊
+        } else if (type === 'hit') { 
             osc.type = 'square';
             osc.frequency.setValueAtTime(150, now);
             osc.frequency.exponentialRampToValueAtTime(0.01, now + 0.3);
@@ -278,7 +270,7 @@
             gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
             osc.start(now);
             osc.stop(now + 0.3);
-        } else if (type === 'sword') { // 揮劍
+        } else if (type === 'sword') { 
             osc.type = 'sawtooth';
             osc.frequency.setValueAtTime(600, now);
             osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
@@ -286,7 +278,7 @@
             gainNode.gain.linearRampToValueAtTime(0, now + 0.1);
             osc.start(now);
             osc.stop(now + 0.1);
-        } else if (type === 'win') { // 勝利
+        } else if (type === 'win') { 
             osc.type = 'triangle';
             osc.frequency.setValueAtTime(440, now);
             osc.frequency.setValueAtTime(554, now + 0.1);
@@ -508,7 +500,9 @@
         const heroImg = document.getElementById('hero-img');
         const effectOverlay = document.getElementById('effect-overlay');
         
+        monsterImg.src = 'icon.jpg'; // 重置
         monsterImg.className = 'w-full h-full rounded-full object-cover border-4 border-red-500 shadow-xl z-10 relative';
+        
         heroImg.className = 'w-full h-full object-cover rounded-xl border-2 border-white/50 shadow-2xl hero-idle';
         effectOverlay.className = 'absolute inset-0 flex items-center justify-center text-9xl z-50 pointer-events-none opacity-0';
 
@@ -540,7 +534,16 @@
         
         document.getElementById('reveal-area').classList.add('hidden');
         document.getElementById('battle-result-area').classList.remove('hidden');
-        battleText.innerText = isSatisfied ? "英雄準備反擊..." : "麋鹿獸露出了飢餓的眼神...";
+        
+        if (!isSatisfied) {
+            // 不滿意 -> 換成送禮者照片
+            battleText.innerText = `麋鹿獸覺得禮物太爛，決定改吃掉 ${giver}...`;
+            heroImg.src = getHeroImage(giver);
+            document.getElementById('battle-hero-name').innerText = giver;
+        } else {
+            // 滿意
+            battleText.innerText = "英雄準備反擊...";
+        }
         
         if (!isSatisfied) heroImg.classList.add('shake-light');
 
@@ -548,6 +551,7 @@
             heroImg.classList.remove('shake-light');
             
             if (isSatisfied) {
+                // 勝利：變哭臉 -> 飛走
                 scenario = victoryScenarios[Math.floor(Math.random() * victoryScenarios.length)];
                 battleText.innerText = scenario.text;
                 effectOverlay.innerText = scenario.emoji;
@@ -556,22 +560,25 @@
                 effectOverlay.classList.add('effect-hit');
                 
                 setTimeout(() => {
+                    monsterImg.src = 'monster_dead.jpg'; // 切換哭哭臉
                     monsterImg.classList.add('monster-die');
                     playSound('win');
                 }, 300);
 
             } else {
+                // 失敗：變生氣臉 -> 原地攻擊 -> 送禮者消失
                 scenario = defeatScenarios[Math.floor(Math.random() * defeatScenarios.length)];
                 battleText.innerText = scenario.text;
                 
                 playSound('attack'); 
+                
+                monsterImg.src = 'monster_angry.jpg'; // 切換生氣臉
                 monsterImg.classList.add('monster-attack-stay'); 
                 
                 setTimeout(() => {
                     playSound('hit');
                     heroImg.classList.remove('hero-idle');
                     
-                    // 隨機 5 種死法
                     const deaths = ['hero-fly-away', 'hero-dead', 'hero-flatten', 'hero-spiral', 'hero-drop'];
                     const randomDeath = deaths[Math.floor(Math.random() * deaths.length)];
                     heroImg.classList.add(randomDeath);
@@ -607,6 +614,9 @@
         history.forEach((battle) => {
             const div = document.createElement('div');
             div.className = `p-4 border-b border-gray-200 ${battle.isSatisfied ? 'bg-green-50' : 'bg-red-50'}`;
+            // 結果頁顯示：
+            const resultText = battle.isSatisfied ? '✅ 成功擊退' : `💀 ${battle.giver} 被吃了`;
+            
             div.innerHTML = `
                 <div class="flex items-center justify-between mb-2">
                     <div class="font-bold text-lg">
@@ -614,7 +624,7 @@
                         <span class="mx-2 text-gray-400">➜</span>
                         <span class="text-blue-600">${battle.receiver}</span>
                     </div>
-                    <div class="text-2xl">${battle.isSatisfied ? '✅' : '💀'}</div>
+                    <div class="text-sm font-bold ${battle.isSatisfied ? 'text-green-600' : 'text-red-600'}">${resultText}</div>
                 </div>
                 <div class="text-sm text-gray-600 italic">
                     ${battle.scenario.emoji} ${battle.scenario.text}
