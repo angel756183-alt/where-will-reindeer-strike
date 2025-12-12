@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>聖誕麋鹿冒險：要去哪裡擾亂人類世界呢</title>
+    <meta name="theme-color" content="#7f1d1d">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon.jpg">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
+        body { font-family: 'Noto Sans TC', sans-serif; }
+        .fade-in { animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-red-900 via-green-900 to-blue-900 text-white select-none">
+
+<div id="app" class="max-w-md mx-auto min-h-screen p-4 flex flex-col">
+    
+    <header class="text-center py-4 mb-4">
+        <div class="w-24 h-24 mx-auto mb-2 rounded-full overflow-hidden border-4 border-yellow-400 shadow-lg">
+            <img src="icon.jpg" alt="麋鹿獸" class="w-full h-full object-cover">
+        </div>
+        <h1 class="text-3xl font-bold text-yellow-300 drop-shadow-md">🦌 聖誕麋鹿冒險 🎄</h1>
+    </header>
+
+    <div id="view-setup" class="flex-1 fade-in">
+        <div class="bg-white/10 backdrop-blur-md rounded-xl p-6 shadow-xl border border-white/20">
+            <h2 class="text-xl font-bold mb-4 flex items-center">
+                <span>🛡️ 英雄名單</span>
+                <span id="count-display" class="ml-auto text-sm bg-red-600 px-2 py-1 rounded-full">13人</span>
+            </h2>
+            
+            <div id="participants-list" class="space-y-2 max-h-60 overflow-y-auto mb-4 pr-1">
+                </div>
+
+            <div class="flex gap-2 mb-6">
+                <input type="text" id="new-name" placeholder="輸入新英雄名字" class="flex-1 bg-white/20 border border-white/30 rounded px-3 py-2 text-white placeholder-gray-300 focus:outline-none focus:border-yellow-400">
+                <button onclick="addParticipant()" class="bg-green-600 hover:bg-green-500 px-4 py-2 rounded font-bold shadow">＋</button>
+            </div>
+
+            <div class="border-t border-white/20 pt-4 mb-6">
+                <h3 class="text-lg font-bold mb-2 text-pink-300">❤️ 禁忌之戀 (夫妻設定)</h3>
+                <p class="text-xs text-gray-300 mb-2">這兩位英雄絕對不會抽到彼此</p>
+                <div class="flex gap-2">
+                    <input type="text" id="couple-1" value="紫璇" class="w-1/2 bg-pink-900/40 border border-pink-500/50 rounded px-3 py-2 text-center">
+                    <span class="py-2 text-pink-400">⚡</span>
+                    <input type="text" id="couple-2" value="智堯" class="w-1/2 bg-pink-900/40 border border-pink-500/50 rounded px-3 py-2 text-center">
+                </div>
+            </div>
+
+            <button onclick="startStory()" class="w-full bg-gradient-to-r from-yellow-500 to-red-600 py-4 rounded-xl text-xl font-bold shadow-lg transform active:scale-95 transition-all">
+                ⚔️ 開始冒險
+            </button>
+            
+            <div class="mt-4 text-center">
+                 <button onclick="resetData()" class="text-xs text-gray-400 underline">清除所有紀錄重置</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-story" class="hidden flex-1 flex flex-col justify-center items-center text-center fade-in p-4">
+        <div class="bg-black/60 p-6 rounded-xl border border-red-500/50 shadow-2xl">
+            <h2 class="text-2xl font-bold text-red-400 mb-4">⚠️ 警報：災難降臨</h2>
+            <p class="text-lg leading-relaxed mb-6 text-gray-100 text-left">
+                聖誕節這天甦醒了...<br><br>
+                飢餓已久的<b>麋鹿獸</b>準備進到人類世界，牠正尋找著平靜的社會大肆破壞。<br><br>
+                這 <span id="story-count" class="text-yellow-400 font-bold">15</span> 位英雄們是否能夠維持社會和平呢？<br>
+                還是會被麋鹿獸給一口吞下？<br><br>
+                命運的轉盤已經開始轉動...
+            </p>
+            <button onclick="enterDraw()" class="bg-red-600 hover:bg-red-500 text-white px-8 py-3 rounded-full font-bold text-lg animate-pulse shadow-lg ring-4 ring-red-900">
+                進入戰場
+            </button>
+        </div>
+    </div>
+
+    <div id="view-drawing" class="hidden flex-1 flex flex-col fade-in">
+        <div class="text-center mb-8">
+            <div class="inline-block bg-blue-900/80 px-4 py-1 rounded-full text-sm border border-blue-400 mb-2">
+                第 <span id="round-number">1</span> 回合
+            </div>
+            <h2 class="text-3xl font-bold mt-2">
+                贈禮者：<span id="current-giver" class="text-yellow-300 border-b-2 border-yellow-300">英雄A</span>
+            </h2>
+        </div>
+
+        <div id="gift-box-area" class="flex-1 flex flex-col items-center justify-center cursor-pointer" onclick="revealReceiver()">
+            <div class="text-9xl animate-bounce">🎁</div>
+            <p class="mt-4 text-xl animate-pulse text-yellow-200">點擊打開神秘禮物...</p>
+        </div>
+
+        <div id="reveal-area" class="hidden flex-1 flex flex-col items-center justify-center">
+            <p class="text-gray-300 text-sm mb-2">禮物是送給...</p>
+            <div class="text-5xl font-bold text-green-400 mb-8 drop-shadow-lg" id="current-receiver">
+                英雄B
+            </div>
+            
+            <div class="w-full bg-white/10 backdrop-blur rounded-xl p-6 border border-white/20">
+                <p class="text-center mb-4 text-lg">接收者滿意這份禮物嗎？</p>
+                <div class="grid grid-cols-2 gap-4">
+                    <button onclick="handleFeedback(true)" class="bg-green-600 hover:bg-green-500 py-4 rounded-lg font-bold flex flex-col items-center gap-1 transform active:scale-95 transition">
+                        <span class="text-2xl">⚔️</span>
+                        <span>滿意 (進攻)</span>
+                    </button>
+                    <button onclick="handleFeedback(false)" class="bg-red-600 hover:bg-red-500 py-4 rounded-lg font-bold flex flex-col items-center gap-1 transform active:scale-95 transition">
+                        <span class="text-2xl">😱</span>
+                        <span>不滿意 (被吃)</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="battle-result-area" class="hidden flex-1 flex flex-col items-center justify-center text-center p-4">
+            <div id="battle-emoji" class="text-8xl mb-4 shake"></div>
+            <p id="battle-text" class="text-xl font-bold leading-relaxed mb-8"></p>
+            <button onclick="nextRound()" class="w-full bg-yellow-500 text-black font-bold py-3 rounded-lg shadow-lg">
+                繼續下一位英雄
+            </button>
+        </div>
+    </div>
+
+    <div id="view-result" class="hidden flex-1 fade-in">
+        <h2 class="text-2xl font-bold text-center mb-6 text-yellow-300">📜 戰役紀錄</h2>
+        
+        <div class="bg-white/90 text-gray-900 rounded-xl shadow-2xl overflow-hidden">
+            <div class="max-h-[60vh] overflow-y-auto" id="final-list">
+                </div>
+        </div>
+
+        <div class="mt-6 flex gap-3">
+             <button onclick="downloadScreenshot()" class="flex-1 bg-blue-600 text-white font-bold py-3 rounded-lg shadow text-center">
+                📸 截圖保存
+            </button>
+            <button onclick="resetData()" class="flex-1 bg-gray-600 text-white font-bold py-3 rounded-lg shadow text-center">
+                🔄 重新開始
+            </button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // --- 資料與狀態 ---
+    const defaultParticipants = [
+        '晨豪', '佳瑜', '念慈', '詠筑', '惠子', 
+        '亭潔', '士家', '冠宇', '敏毓', '柏茵', 
+        '英筑', '紫璇', '智堯'
+    ];
+    
+    let participants = [...defaultParticipants];
+    let couple = { p1: '紫璇', p2: '智堯' };
+    let drawOrder = [];
+    let currentIndex = 0;
+    let battleHistory = [];
+
+    // 勝利與失敗腳本 (來自來源)
+    const victoryScenarios = [
+        { emoji: '⚔️', text: '揮舞聖誕之劍，一劍斬斷麋鹿獸的鹿角，麋鹿獸落荒而逃！' },
+        { emoji: '🎁', text: '用禮物的溫暖之力融化了麋鹿獸的冰冷之心，牠感動得流下眼淚！' },
+        { emoji: '🔥', text: '召喚聖誕火焰，照亮黑暗！麋鹿獸被光明驅散！' },
+        { emoji: '❄️', text: '使用冰雪魔法將麋鹿獸冰封，牠被凍成了冰雕！' },
+        { emoji: '⭐', text: '召喚星光之力，萬千流星劃破天際，麋鹿獸被星光淨化！' },
+        { emoji: '🎵', text: '唱起聖誕頌歌，美妙的旋律讓麋鹿獸跳起舞來，忘記了戰鬥！' },
+        { emoji: '🍪', text: '拿出祖傳的聖誕餅乾，麋鹿獸聞到香味後乖乖投降！' },
+        { emoji: '🎄', text: '種下聖誕樹，綠色的生命力讓麋鹿獸回歸善良本性！' },
+        { emoji: '🔔', text: '搖響聖誕鈴鐺，清脆的鈴聲讓麋鹿獸暈頭轉向，狼狽逃走！' },
+        { emoji: '✨', text: '散發聖誕魔法粉塵，麋鹿獸在閃光中化為煙霧消散！' },
+        { emoji: '🎅', text: '召喚聖誕老人降臨，麋鹿獸一看到老闆來了立刻跪地求饒！' },
+        { emoji: '🦌', text: '用愛感化麋鹿獸，牠決定改邪歸正，加入聖誕老人的雪橇隊！' },
+        { emoji: '🌟', text: '引導北極星之光，神聖的光芒照耀大地，麋鹿獸跪地臣服！' },
+        { emoji: '🎺', text: '吹響勝利號角，震耳欲聾的聲響嚇得麋鹿獸抱頭鼠竄！' },
+        { emoji: '🍷', text: '請麋鹿獸喝聖誕熱紅酒，牠喝醉後睡著了，危機解除！' }
+    ];
+
+    const defeatScenarios = [
+        { emoji: '😱', text: '還沒反應過來，就被麋鹿獸一口吞下肚了！' },
+        { emoji: '💨', text: '想要逃跑，但麋鹿獸的速度太快，瞬間就被追上吃掉了！' },
+        { emoji: '🌀', text: '被麋鹿獸的黑暗漩渦捲入，消失在無盡的黑暗中...' },
+        { emoji: '❌', text: '武器沒有作用！麋鹿獸用鹿角一頂，就把英雄頂飛吃掉了！' },
+        { emoji: '😵', text: '麋鹿獸發出催眠光波，英雄睡著後就變成了點心...' },
+        { emoji: '🕳️', text: '踩到麋鹿獸設下的陷阱，掉進深淵被吃掉了！' },
+        { emoji: '💫', text: '被麋鹿獸的眼神迷惑，恍惚間就成為了牠的食物...' },
+        { emoji: '🌪️', text: '麋鹿獸召喚暴風雪，在風雪中迷失方向後被吞噬！' },
+        { emoji: '⚡', text: '麋鹿獸釋放雷電之力，被電暈後就被吃掉了！' },
+        { emoji: '🎭', text: '麋鹿獸變身成聖誕老人，英雄放下戒心後就被偷襲吃掉！' },
+        { emoji: '🌑', text: '麋鹿獸創造黑暗領域，在伸手不見五指的黑暗中被獵食！' },
+        { emoji: '🪤', text: '被麋鹿獸的禮物炸彈炸暈，倒地後就被吃掉了！' },
+        { emoji: '🎪', text: '麋鹿獸用魔法製造幻境，英雄在幻覺中迷失後被吃掉！' },
+        { emoji: '🌊', text: '麋鹿獸召喚寒冰波浪，被凍僵的英雄成為了冰棒點心！' },
+        { emoji: '🎯', text: '想要反擊但完全打不中！麋鹿獸靈活閃躲後反殺成功！' }
+    ];
+
+    // --- 初始化 ---
+    window.onload = function() {
+        // PWA Service Worker 註冊
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+
+        loadData();
+        renderParticipants();
+        
+        // 如果有上次未完成的進度
+        const savedState = localStorage.getItem('xmasState');
+        if (savedState) {
+            const state = JSON.parse(savedState);
+            if (state.step === 'result') {
+                showView('view-result');
+                renderResults(state.battleHistory);
+            }
+        }
+    };
+
+    // --- 邏輯函數 ---
+
+    function loadData() {
+        const savedPart = localStorage.getItem('xmasParticipants');
+        if (savedPart) participants = JSON.parse(savedPart);
+        
+        const savedCouple = localStorage.getItem('xmasCouple');
+        if (savedCouple) couple = JSON.parse(savedCouple);
+        
+        document.getElementById('couple-1').value = couple.p1;
+        document.getElementById('couple-2').value = couple.p2;
+        updateCount();
+    }
+
+    function renderParticipants() {
+        const list = document.getElementById('participants-list');
+        list.innerHTML = '';
+        participants.forEach((p, index) => {
+            const div = document.createElement('div');
+            div.className = 'flex items-center gap-2 bg-black/20 p-2 rounded';
+            div.innerHTML = `
+                <span class="w-6 text-center text-gray-400">${index + 1}</span>
+                <span class="flex-1 font-bold">${p}</span>
+                <button onclick="removeParticipant(${index})" class="text-red-400 hover:text-red-200 px-2">✕</button>
+            `;
+            list.appendChild(div);
+        });
+        updateCount();
+    }
+
+    function addParticipant() {
+        const input = document.getElementById('new-name');
+        const name = input.value.trim();
+        if (name) {
+            participants.push(name);
+            input.value = '';
+            saveConfig();
+            renderParticipants();
+        }
+    }
+
+    function removeParticipant(index) {
+        if (participants.length <= 3) {
+            alert('至少需要 3 人才能進行遊戲');
+            return;
+        }
+        participants.splice(index, 1);
+        saveConfig();
+        renderParticipants();
+    }
+
+    function updateCount() {
+        document.getElementById('count-display').innerText = `${participants.length}人`;
+        document.getElementById('story-count').innerText = participants.length;
+    }
+
+    function saveConfig() {
+        couple.p1 = document.getElementById('couple-1').value.trim();
+        couple.p2 = document.getElementById('couple-2').value.trim();
+        localStorage.setItem('xmasParticipants', JSON.stringify(participants));
+        localStorage.setItem('xmasCouple', JSON.stringify(couple));
+    }
+
+    function startStory() {
+        saveConfig(); // 確保夫妻設定已儲存
+        if (participants.length < 3) return alert('人數不足！');
+        
+        // 生成抽籤邏輯
+        if (!generateDrawOrder()) {
+            return alert('無法生成有效的抽籤順序 (可能是夫妻設定導致死結)，請重試！');
+        }
+
+        showView('view-story');
+    }
+
+    // 核心演算法：洗牌並檢查夫妻不互抽
+    function generateDrawOrder() {
+        const c1 = couple.p1;
+        const c2 = couple.p2;
+        let valid = false;
+        let attempts = 0;
+        let shuffled = [];
+
+        while (!valid && attempts < 2000) {
+            shuffled = [...participants];
+            // Fisher-Yates Shuffle
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+
+            // 檢查邏輯：A -> B, B -> C ... Last -> A
+            let isChainValid = true;
+            for (let i = 0; i < shuffled.length; i++) {
+                const giver = shuffled[i];
+                const receiver = shuffled[(i + 1) % shuffled.length];
+                
+                // 禁止夫妻互抽
+                if ((giver === c1 && receiver === c2) || (giver === c2 && receiver === c1)) {
+                    isChainValid = false;
+                    break;
+                }
+            }
+            if (isChainValid) valid = true;
+            attempts++;
+        }
+
+        if (valid) {
+            drawOrder = shuffled;
+            currentIndex = 0;
+            battleHistory = [];
+            return true;
+        }
+        return false;
+    }
+
+    function enterDraw() {
+        showView('view-drawing');
+        setupRound();
+    }
+
+    function setupRound() {
+        // 重置畫面狀態
+        document.getElementById('gift-box-area').classList.remove('hidden');
+        document.getElementById('reveal-area').classList.add('hidden');
+        document.getElementById('battle-result-area').classList.add('hidden');
+        
+        const giver = drawOrder[currentIndex];
+        document.getElementById('current-giver').innerText = giver;
+        document.getElementById('round-number').innerText = currentIndex + 1;
+    }
+
+    function revealReceiver() {
+        const receiver = drawOrder[(currentIndex + 1) % drawOrder.length];
+        
+        document.getElementById('gift-box-area').classList.add('hidden');
+        document.getElementById('reveal-area').classList.remove('hidden');
+        document.getElementById('current-receiver').innerText = receiver;
+    }
+
+    function handleFeedback(isSatisfied) {
+        const giver = drawOrder[currentIndex];
+        const receiver = drawOrder[(currentIndex + 1) % drawOrder.length];
+        
+        // 隨機選取腳本
+        let scenario;
+        if (isSatisfied) {
+            scenario = victoryScenarios[Math.floor(Math.random() * victoryScenarios.length)];
+        } else {
+            scenario = defeatScenarios[Math.floor(Math.random() * defeatScenarios.length)];
+        }
+
+        // 紀錄結果
+        battleHistory.push({
+            giver,
+            receiver,
+            isSatisfied,
+            scenario
+        });
+
+        // 顯示戰鬥結果
+        document.getElementById('reveal-area').classList.add('hidden');
+        document.getElementById('battle-result-area').classList.remove('hidden');
+        document.getElementById('battle-emoji').innerText = scenario.emoji;
+        document.getElementById('battle-text').innerText = scenario.text;
+        
+        // 儲存當前狀態以免手滑重整
+        localStorage.setItem('xmasState', JSON.stringify({
+            step: 'drawing',
+            battleHistory: battleHistory
+        }));
+    }
+
+    function nextRound() {
+        if (currentIndex < drawOrder.length - 1) {
+            currentIndex++;
+            setupRound();
+        } else {
+            finishGame();
+        }
+    }
+
+    function finishGame() {
+        localStorage.setItem('xmasState', JSON.stringify({
+            step: 'result',
+            battleHistory: battleHistory
+        }));
+        showView('view-result');
+        renderResults(battleHistory);
+    }
+
+    function renderResults(history) {
+        const container = document.getElementById('final-list');
+        container.innerHTML = '';
+
+        history.forEach((battle, idx) => {
+            const div = document.createElement('div');
+            div.className = `p-4 border-b border-gray-200 ${battle.isSatisfied ? 'bg-green-50' : 'bg-red-50'}`;
+            
+            div.innerHTML = `
+                <div class="flex items-center justify-between mb-2">
+                    <div class="font-bold text-lg">
+                        <span class="text-gray-600">${battle.giver}</span>
+                        <span class="mx-2 text-gray-400">➜</span>
+                        <span class="text-blue-600">${battle.receiver}</span>
+                    </div>
+                    <div class="text-2xl">${battle.isSatisfied ? '✅' : '💀'}</div>
+                </div>
+                <div class="text-sm text-gray-600 italic">
+                    ${battle.scenario.emoji} ${battle.scenario.text}
+                </div>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    function resetData() {
+        if(confirm('確定要清除所有紀錄重新開始嗎？')) {
+            localStorage.removeItem('xmasState');
+            localStorage.removeItem('xmasParticipants');
+            localStorage.removeItem('xmasCouple');
+            location.reload();
+        }
+    }
+
+    function downloadScreenshot() {
+        alert('請使用手機內建截圖功能保存結果！(網頁版自動截圖相容性較低)');
+    }
+
+    // --- 工具 ---
+    function showView(id) {
+        ['view-setup', 'view-story', 'view-drawing', 'view-result'].forEach(v => {
+            document.getElementById(v).classList.add('hidden');
+        });
+        document.getElementById(id).classList.remove('hidden');
+    }
+</script>
+
+</body>
+</html>

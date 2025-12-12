@@ -1,0 +1,16 @@
+{
+  "name": "聖誕冒險",
+  "short_name": "聖誕冒險",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#7f1d1d",
+  "theme_color": "#7f1d1d",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}
