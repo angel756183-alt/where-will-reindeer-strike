@@ -16,7 +16,7 @@
 
         /* --- 核心動畫區 --- */
 
-        /* 1. 麋鹿獸被打倒 (震動、變色、飛走) */
+        /* 1. 麋鹿獸被打倒 */
         .monster-die { animation: monsterDie 1.5s forwards ease-in-out; }
         @keyframes monsterDie {
             0% { transform: scale(1); filter: none; }
@@ -25,12 +25,12 @@
             100% { transform: scale(0) rotate(720deg) translateY(-800px); opacity: 0; }
         }
 
-        /* 2. 麋鹿獸攻擊 (蓄力後衝撞) */
+        /* 2. 麋鹿獸攻擊 (修正版：縮小放大倍率，避免完全遮擋) */
         .monster-attack { animation: monsterAttack 0.6s forwards cubic-bezier(0.25, 1, 0.5, 1); }
         @keyframes monsterAttack {
             0% { transform: scale(1) translateY(0); }
-            30% { transform: scale(0.9) translateY(-20px); } /* 蓄力 */
-            100% { transform: scale(1.8) translateY(100px); filter: drop-shadow(0 0 20px red); z-index: 50; } /* 衝撞 */
+            40% { transform: scale(0.9) translateY(-20px); } /* 蓄力 */
+            100% { transform: scale(1.4) translateY(60px); filter: drop-shadow(0 0 20px red); z-index: 10; } /* 衝撞 (減少位移與放大) */
         }
 
         /* 3. 英雄 - 呼吸待機 */
@@ -52,7 +52,7 @@
         .hero-dead { animation: heroDead 1.5s forwards ease-out; }
         @keyframes heroDead {
             0% { transform: scale(1); filter: none; }
-            10% { transform: translate(-5px, 5px); filter: grayscale(1) contrast(200%) brightness(0.5) sepia(100%) hue-rotate(-50deg) saturate(500%); } /* 瞬間受傷紅閃 */
+            10% { transform: translate(-5px, 5px); filter: grayscale(1) contrast(200%) brightness(0.5) sepia(100%) hue-rotate(-50deg) saturate(500%); }
             30% { transform: rotate(-10deg); filter: grayscale(1); }
             100% { transform: rotate(90deg) translateY(50px); filter: grayscale(1) opacity(0.5); }
         }
@@ -65,9 +65,9 @@
             100% { transform: scale(1.5); opacity: 0; }
         }
         
-        /* 搖晃特效 (通用) */
-        .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
-        @keyframes shake { 10%, 90% { transform: translate3d(-2px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
+        /* 緊張顫抖 (對峙時用) */
+        .shake-light { animation: shakeLight 0.2s infinite; }
+        @keyframes shakeLight { 0% { transform: translate(1px, 0); } 50% { transform: translate(-1px, 0); } 100% { transform: translate(0, 0); } }
 
     </style>
 </head>
@@ -187,12 +187,12 @@
             </div>
 
             <div class="flex-1 flex flex-col items-center justify-end pb-4 relative">
-                <div class="w-40 h-40 mb-2 relative group">
+                <div class="w-40 h-40 mb-2 relative group z-20">
                     <img id="hero-img" src="" class="w-full h-full object-cover rounded-xl border-2 border-white/50 shadow-2xl hero-idle">
                     <div id="hero-damage-overlay" class="absolute inset-0 bg-red-600 mix-blend-overlay opacity-0 rounded-xl"></div>
                 </div>
                 
-                <h3 id="battle-hero-name" class="text-2xl font-bold text-yellow-300 drop-shadow-md bg-black/30 px-4 py-1 rounded-full">
+                <h3 id="battle-hero-name" class="text-2xl font-bold text-yellow-300 drop-shadow-md bg-black/30 px-4 py-1 rounded-full z-20">
                     英雄名
                 </h3>
             </div>
@@ -231,26 +231,33 @@
         const gainNode = audioCtx.createGain();
         osc.connect(gainNode);
         gainNode.connect(audioCtx.destination);
-
         const now = audioCtx.currentTime;
 
-        if (type === 'attack') { // 揮劍 Shing
+        if (type === 'attack') { // 緊張氣氛/蓄力
             osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(800, now);
-            osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
-            gainNode.gain.setValueAtTime(0.3, now);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
-            osc.start(now);
-            osc.stop(now + 0.1);
-        } else if (type === 'hit') { // 被打 Bang
-            osc.type = 'square';
             osc.frequency.setValueAtTime(100, now);
+            osc.frequency.linearRampToValueAtTime(50, now + 0.5);
+            gainNode.gain.setValueAtTime(0.2, now);
+            gainNode.gain.linearRampToValueAtTime(0, now + 0.5);
+            osc.start(now);
+            osc.stop(now + 0.5);
+        } else if (type === 'hit') { // 撞擊
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(150, now);
             osc.frequency.exponentialRampToValueAtTime(0.01, now + 0.3);
             gainNode.gain.setValueAtTime(0.5, now);
             gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
             osc.start(now);
             osc.stop(now + 0.3);
-        } else if (type === 'win') { // 勝利 Fanfare
+        } else if (type === 'sword') { // 揮劍
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(600, now);
+            osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
+            gainNode.gain.setValueAtTime(0.3, now);
+            gainNode.gain.linearRampToValueAtTime(0, now + 0.1);
+            osc.start(now);
+            osc.stop(now + 0.1);
+        } else if (type === 'win') { // 勝利
             osc.type = 'triangle';
             osc.frequency.setValueAtTime(440, now);
             osc.frequency.setValueAtTime(554, now + 0.1);
@@ -271,18 +278,12 @@
         '英筑', '紫璇', '智堯', '銘緯', '育姍'
     ];
     
-    // 性別與分組設定 (M=男, F=女)
     const genderData = {
         '晨豪': 'M', '佳瑜': 'F', '念慈': 'F', '詠筑': 'M', '惠子': 'F',
         '亭潔': 'F', '士家': 'M', '冠宇': 'M', '敏毓': 'F', '柏茵': 'F',
         '英筑': 'F', '紫璇': 'F', '智堯': 'M', '銘緯': 'M', '育姍': 'F'
     };
 
-    // --- 男生分組映射 ---
-    // A: 智堯 (Q版)
-    // B: 冠宇, 詠筑 (日系帥氣)
-    // C: 晨豪, 士家 (成熟藝術)
-    // D: 銘緯 (花美男)
     const maleGroupMap = {
         '智堯': 'boy_a.jpg', 
         '冠宇': 'boy_b.jpg', '詠筑': 'boy_b.jpg',
@@ -290,12 +291,6 @@
         '銘緯': 'boy_d.jpg'
     };
 
-    // --- 女生分組映射 (精確指定) ---
-    // A: 佳瑜 (短髮)
-    // B: 念慈, 育姍, 惠子, 英筑 (眼鏡)
-    // C: 紫璇 (長髮)
-    // D: 柏茵 (飄逸)
-    // E: 敏毓, 亭潔 (披風)
     const femaleGroupMap = {
         '佳瑜': 'girl_a.jpg',
         '念慈': 'girl_b.jpg', '育姍': 'girl_b.jpg', '惠子': 'girl_b.jpg', '英筑': 'girl_b.jpg',
@@ -309,9 +304,8 @@
     let drawOrder = [];
     let currentIndex = 0;
     let battleHistory = [];
-    let tempNewGender = 'M'; // 新增人員的預設性別
+    let tempNewGender = 'M';
 
-    // 腳本
     const victoryScenarios = [
         { emoji: '⚔️', text: '一劍斬斷了麋鹿獸的鹿角！' },
         { emoji: '🔥', text: '聖誕火焰將麋鹿獸烤成了牛排！' },
@@ -334,7 +328,6 @@
         loadData();
         renderParticipants();
         
-        // 檢查是否有儲存的進度
         const savedState = localStorage.getItem('xmasState');
         if (savedState) {
             const state = JSON.parse(savedState);
@@ -349,14 +342,8 @@
     function loadData() {
         const savedPart = localStorage.getItem('xmasParticipants');
         if (savedPart) participants = JSON.parse(savedPart);
-        
-        // 載入性別 (如果有名單變動，這裡簡單合併)
         const savedGender = localStorage.getItem('xmasGender');
-        if (savedGender) {
-            const savedG = JSON.parse(savedGender);
-            Object.assign(genderData, savedG);
-        }
-
+        if (savedGender) Object.assign(genderData, JSON.parse(savedGender));
         const savedCouple = localStorage.getItem('xmasCouple');
         if (savedCouple) couple = JSON.parse(savedCouple);
         
@@ -372,7 +359,6 @@
             const g = genderData[p] || 'M';
             const badge = g === 'M' ? 'bg-blue-600' : 'bg-pink-600';
             const icon = g === 'M' ? '🚹' : '🚺';
-            
             const div = document.createElement('div');
             div.className = 'flex items-center gap-2 bg-black/20 p-2 rounded hover:bg-black/30 transition';
             div.innerHTML = `
@@ -404,7 +390,7 @@
         const name = input.value.trim();
         if (name) {
             participants.push(name);
-            genderData[name] = tempNewGender; // 儲存性別
+            genderData[name] = tempNewGender;
             input.value = '';
             saveConfig();
             renderParticipants();
@@ -433,11 +419,10 @@
         localStorage.setItem('xmasCouple', JSON.stringify(couple));
     }
 
-    // --- 4. 遊戲流程 ---
     function startStory() {
         saveConfig();
         if (participants.length < 3) return alert('人數不足！');
-        if (!generateDrawOrder()) return alert('無法生成有效順序 (請檢查夫妻設定)');
+        if (!generateDrawOrder()) return alert('無法生成有效順序');
         showView('view-story');
     }
 
@@ -447,7 +432,6 @@
         let valid = false;
         let attempts = 0;
         let shuffled = [];
-
         while (!valid && attempts < 2000) {
             shuffled = [...participants];
             for (let i = shuffled.length - 1; i > 0; i--) {
@@ -480,32 +464,23 @@
         setupRound();
     }
 
-    // --- 核心邏輯：取得英雄圖片 ---
     function getHeroImage(name) {
         const gender = genderData[name] || 'M';
-        
-        if (gender === 'M') {
-            // 男生查表，沒在表內預設用 B
-            return maleGroupMap[name] || 'boy_b.jpg';
-        } else {
-            // 女生查表，沒在表內預設用 A
-            return femaleGroupMap[name] || 'girl_a.jpg';
-        }
+        if (gender === 'M') return maleGroupMap[name] || 'boy_b.jpg';
+        else return femaleGroupMap[name] || 'girl_a.jpg';
     }
 
     function setupRound() {
-        // UI 重置
         document.getElementById('gift-box-area').classList.remove('hidden');
         document.getElementById('reveal-area').classList.add('hidden');
         document.getElementById('battle-result-area').classList.add('hidden');
         
-        // 圖片與動畫重置
         const monsterImg = document.getElementById('monster-img');
         const heroImg = document.getElementById('hero-img');
         const effectOverlay = document.getElementById('effect-overlay');
         
-        monsterImg.className = 'w-full h-full rounded-full object-cover border-4 border-red-500 shadow-xl z-10 relative'; // 移除動畫class
-        heroImg.className = 'w-full h-full object-cover rounded-xl border-2 border-white/50 shadow-2xl hero-idle'; // 恢復呼吸動畫
+        monsterImg.className = 'w-full h-full rounded-full object-cover border-4 border-red-500 shadow-xl z-10 relative';
+        heroImg.className = 'w-full h-full object-cover rounded-xl border-2 border-white/50 shadow-2xl hero-idle';
         effectOverlay.className = 'absolute inset-0 flex items-center justify-center text-9xl z-50 pointer-events-none opacity-0';
 
         const giver = drawOrder[currentIndex];
@@ -519,7 +494,6 @@
         document.getElementById('reveal-area').classList.remove('hidden');
         document.getElementById('current-receiver').innerText = receiver;
         
-        // 預先載入英雄圖片
         const imgPath = getHeroImage(receiver);
         document.getElementById('hero-img').src = imgPath;
         document.getElementById('battle-hero-name').innerText = receiver;
@@ -534,52 +508,59 @@
         const heroImg = document.getElementById('hero-img');
         const effectOverlay = document.getElementById('effect-overlay');
         const battleText = document.getElementById('battle-text');
-
-        if (isSatisfied) {
-            // 勝利 (Win)
-            scenario = victoryScenarios[Math.floor(Math.random() * victoryScenarios.length)];
-            effectOverlay.innerText = scenario.emoji;
-            
-            // 動畫流程
-            playSound('attack'); // 音效
-            effectOverlay.classList.add('effect-hit'); // 特效 Emoji
-            
-            setTimeout(() => {
-                monsterImg.classList.add('monster-die'); // 麋鹿飛走
-                playSound('win');
-            }, 300);
-
-        } else {
-            // 失敗 (Lose)
-            scenario = defeatScenarios[Math.floor(Math.random() * defeatScenarios.length)];
-            
-            // 動畫流程
-            playSound('attack'); // 麋鹿吼叫前奏
-            monsterImg.classList.add('monster-attack'); // 麋鹿衝撞
-            
-            setTimeout(() => {
-                playSound('hit'); // 撞擊聲
-                heroImg.classList.remove('hero-idle'); // 停止呼吸
-                
-                // 隨機選擇死法
-                if (Math.random() > 0.5) {
-                    heroImg.classList.add('hero-fly-away'); // 飛走
-                } else {
-                    heroImg.classList.add('hero-dead'); // 倒地
-                }
-                
-                document.getElementById('hero-damage-overlay').classList.add('anim-damage'); // 紅光閃爍
-            }, 400);
-        }
-
-        battleHistory.push({ giver, receiver, isSatisfied, scenario });
         
-        // 顯示戰場
+        // 1. 先顯示對峙畫面 (停頓)
         document.getElementById('reveal-area').classList.add('hidden');
         document.getElementById('battle-result-area').classList.remove('hidden');
-        battleText.innerText = scenario.text;
+        battleText.innerText = isSatisfied ? "英雄準備反擊..." : "麋鹿獸露出了飢餓的眼神...";
         
-        localStorage.setItem('xmasState', JSON.stringify({ step: 'drawing', battleHistory: battleHistory }));
+        // 英雄緊張顫抖
+        if (!isSatisfied) heroImg.classList.add('shake-light');
+
+        // 2. 延遲 0.8 秒後觸發動作
+        setTimeout(() => {
+            heroImg.classList.remove('shake-light');
+            
+            if (isSatisfied) {
+                // 勝利
+                scenario = victoryScenarios[Math.floor(Math.random() * victoryScenarios.length)];
+                battleText.innerText = scenario.text;
+                effectOverlay.innerText = scenario.emoji;
+                
+                playSound('sword');
+                effectOverlay.classList.add('effect-hit');
+                
+                setTimeout(() => {
+                    monsterImg.classList.add('monster-die');
+                    playSound('win');
+                }, 300);
+
+            } else {
+                // 失敗
+                scenario = defeatScenarios[Math.floor(Math.random() * defeatScenarios.length)];
+                battleText.innerText = scenario.text;
+                
+                playSound('attack'); 
+                monsterImg.classList.add('monster-attack'); // 觸發修正後的攻擊動畫
+                
+                setTimeout(() => {
+                    playSound('hit');
+                    heroImg.classList.remove('hero-idle');
+                    
+                    if (Math.random() > 0.5) {
+                        heroImg.classList.add('hero-fly-away');
+                    } else {
+                        heroImg.classList.add('hero-dead');
+                    }
+                    
+                    document.getElementById('hero-damage-overlay').classList.add('anim-damage');
+                }, 500); // 配合攻擊動畫延遲撞擊點
+            }
+
+            battleHistory.push({ giver, receiver, isSatisfied, scenario });
+            localStorage.setItem('xmasState', JSON.stringify({ step: 'drawing', battleHistory: battleHistory }));
+
+        }, 800); // 0.8秒 的停頓時間
     }
 
     function nextRound() {
@@ -622,21 +603,4 @@
 
     function resetData() {
         if(confirm('確定要清除所有紀錄重新開始嗎？')) {
-            localStorage.removeItem('xmasState');
-            localStorage.removeItem('xmasParticipants');
-            localStorage.removeItem('xmasCouple');
-            localStorage.removeItem('xmasGender');
-            location.reload();
-        }
-    }
-
-    function showView(id) {
-        ['view-setup', 'view-story', 'view-drawing', 'view-result'].forEach(v => {
-            document.getElementById(v).classList.add('hidden');
-        });
-        document.getElementById(id).classList.remove('hidden');
-    }
-</script>
-
-</body>
-</html>
+            localStorage.removeItem('xmasState
