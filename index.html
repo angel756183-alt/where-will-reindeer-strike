@@ -10,42 +10,93 @@
     <link rel="apple-touch-icon" href="icon.jpg">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
-        body { font-family: 'Noto Sans TC', sans-serif; }
+        body { font-family: 'Noto Sans TC', sans-serif; overflow-x: hidden; touch-action: manipulation; }
         .fade-in { animation: fadeIn 0.5s ease-in; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* --- 核心動畫區 --- */
+
+        /* 1. 麋鹿獸被打倒 (震動、變色、飛走) */
+        .monster-die { animation: monsterDie 1.5s forwards ease-in-out; }
+        @keyframes monsterDie {
+            0% { transform: scale(1); filter: none; }
+            10%, 30% { transform: translate(-10px, 0) rotate(-5deg); filter: brightness(2) sepia(1) saturate(5); }
+            20%, 40% { transform: translate(10px, 0) rotate(5deg); }
+            100% { transform: scale(0) rotate(720deg) translateY(-800px); opacity: 0; }
+        }
+
+        /* 2. 麋鹿獸攻擊 (蓄力後衝撞) */
+        .monster-attack { animation: monsterAttack 0.6s forwards cubic-bezier(0.25, 1, 0.5, 1); }
+        @keyframes monsterAttack {
+            0% { transform: scale(1) translateY(0); }
+            30% { transform: scale(0.9) translateY(-20px); } /* 蓄力 */
+            100% { transform: scale(1.8) translateY(100px); filter: drop-shadow(0 0 20px red); z-index: 50; } /* 衝撞 */
+        }
+
+        /* 3. 英雄 - 呼吸待機 */
+        .hero-idle { animation: heroIdle 2s infinite ease-in-out; }
+        @keyframes heroIdle {
+            0%, 100% { transform: scale(1); filter: drop-shadow(0 0 5px rgba(255,255,255,0.5)); }
+            50% { transform: scale(1.05); filter: drop-shadow(0 0 15px rgba(255,255,255,0.8)); }
+        }
+
+        /* 4. 英雄 - 被打飛 (卡通風格) */
+        .hero-fly-away { animation: heroFly 1s forwards ease-in; }
+        @keyframes heroFly {
+            0% { transform: scale(1) rotate(0); }
+            20% { transform: scale(1.2) rotate(-10deg) translate(0, 10px); filter: hue-rotate(90deg); }
+            100% { transform: scale(0) rotate(1080deg) translate(500px, -500px); opacity: 0; }
+        }
+
+        /* 5. 英雄 - 倒地 (戲劇風格) */
+        .hero-dead { animation: heroDead 1.5s forwards ease-out; }
+        @keyframes heroDead {
+            0% { transform: scale(1); filter: none; }
+            10% { transform: translate(-5px, 5px); filter: grayscale(1) contrast(200%) brightness(0.5) sepia(100%) hue-rotate(-50deg) saturate(500%); } /* 瞬間受傷紅閃 */
+            30% { transform: rotate(-10deg); filter: grayscale(1); }
+            100% { transform: rotate(90deg) translateY(50px); filter: grayscale(1) opacity(0.5); }
+        }
+
+        /* 6. 特效 Emoji */
+        .effect-hit { animation: effectHit 0.6s forwards; z-index: 60; }
+        @keyframes effectHit {
+            0% { transform: scale(0) rotate(-45deg); opacity: 0; }
+            50% { transform: scale(2) rotate(0deg); opacity: 1; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+        
+        /* 搖晃特效 (通用) */
         .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
-        @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
+        @keyframes shake { 10%, 90% { transform: translate3d(-2px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
+
     </style>
 </head>
 <body class="min-h-screen bg-gradient-to-br from-red-900 via-green-900 to-blue-900 text-white select-none">
 
-<div id="app" class="max-w-md mx-auto min-h-screen p-4 flex flex-col">
+<div id="app" class="max-w-md mx-auto min-h-screen p-4 flex flex-col relative overflow-hidden">
     
-    <header class="text-center py-4 mb-4">
-        <div class="w-24 h-24 mx-auto mb-2 rounded-full overflow-hidden border-4 border-yellow-400 shadow-lg">
-            <img src="icon.jpg" alt="麋鹿獸" class="w-full h-full object-cover">
-        </div>
-        <h1 class="text-3xl font-bold text-yellow-300 drop-shadow-md">🦌 聖誕麋鹿冒險 🎄</h1>
+    <header class="text-center py-2 mb-2 z-10">
+        <h1 class="text-xl font-bold text-yellow-300 drop-shadow-md tracking-wider">🦌 聖誕麋鹿冒險</h1>
     </header>
 
-    <div id="view-setup" class="flex-1 fade-in">
+    <div id="view-setup" class="flex-1 fade-in z-20 overflow-y-auto">
         <div class="bg-white/10 backdrop-blur-md rounded-xl p-6 shadow-xl border border-white/20">
             <h2 class="text-xl font-bold mb-4 flex items-center">
                 <span>🛡️ 英雄名單</span>
-                <span id="count-display" class="ml-auto text-sm bg-red-600 px-2 py-1 rounded-full">13人</span>
+                <span id="count-display" class="ml-auto text-sm bg-red-600 px-2 py-1 rounded-full">15人</span>
             </h2>
             
             <div id="participants-list" class="space-y-2 max-h-60 overflow-y-auto mb-4 pr-1">
                 </div>
 
-            <div class="flex gap-2 mb-6">
-                <input type="text" id="new-name" placeholder="輸入新英雄名字" class="flex-1 bg-white/20 border border-white/30 rounded px-3 py-2 text-white placeholder-gray-300 focus:outline-none focus:border-yellow-400">
-                <button onclick="addParticipant()" class="bg-green-600 hover:bg-green-500 px-4 py-2 rounded font-bold shadow">＋</button>
+            <div class="flex gap-2 mb-2">
+                <input type="text" id="new-name" placeholder="輸入新英雄" class="flex-1 bg-white/20 border border-white/30 rounded px-3 py-2 text-white placeholder-gray-300 focus:outline-none focus:border-yellow-400">
+                <button id="gender-toggle" onclick="toggleGender()" class="w-12 bg-blue-600 rounded text-xl flex items-center justify-center">🚹</button>
             </div>
+            <button onclick="addParticipant()" class="w-full bg-green-600 hover:bg-green-500 py-2 rounded font-bold shadow mb-6">＋ 新增</button>
 
             <div class="border-t border-white/20 pt-4 mb-6">
-                <h3 class="text-lg font-bold mb-2 text-pink-300">❤️ 禁忌之戀 (夫妻設定)</h3>
-                <p class="text-xs text-gray-300 mb-2">這兩位英雄絕對不會抽到彼此</p>
+                <h3 class="text-lg font-bold mb-2 text-pink-300">❤️ 新婚夫妻</h3>
                 <div class="flex gap-2">
                     <input type="text" id="couple-1" value="紫璇" class="w-1/2 bg-pink-900/40 border border-pink-500/50 rounded px-3 py-2 text-center">
                     <span class="py-2 text-pink-400">⚡</span>
@@ -58,85 +109,109 @@
             </button>
             
             <div class="mt-4 text-center">
-                 <button onclick="resetData()" class="text-xs text-gray-400 underline">清除所有紀錄重置</button>
+                 <button onclick="resetData()" class="text-xs text-gray-400 underline">清除紀錄重置</button>
             </div>
         </div>
     </div>
 
-    <div id="view-story" class="hidden flex-1 flex flex-col justify-center items-center text-center fade-in p-4">
-        <div class="bg-black/60 p-6 rounded-xl border border-red-500/50 shadow-2xl">
+    <div id="view-story" class="hidden flex-1 flex flex-col justify-center items-center text-center fade-in p-4 z-20">
+        <div class="bg-black/60 p-6 rounded-xl border border-red-500/50 shadow-2xl backdrop-blur">
+            <div class="w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden border-4 border-red-500 shadow-lg">
+                <img src="icon.jpg" class="w-full h-full object-cover animate-pulse">
+            </div>
             <h2 class="text-2xl font-bold text-red-400 mb-4">⚠️ 警報：災難降臨</h2>
             <p class="text-lg leading-relaxed mb-6 text-gray-100 text-left">
-                聖誕節這天甦醒了...<br><br>
-                飢餓已久的<b>麋鹿獸</b>準備進到人類世界，牠正尋找著平靜的社會大肆破壞。<br><br>
-                這 <span id="story-count" class="text-yellow-400 font-bold">15</span> 位英雄們是否能夠維持社會和平呢？<br>
-                還是會被麋鹿獸給一口吞下？<br><br>
+                飢餓已久的<b>麋鹿獸</b>甦醒了...<br>
+                這 <span id="story-count" class="text-yellow-400 font-bold">15</span> 位英雄們是否能夠維持和平呢？<br>
+                還是會成為牠的聖誕大餐？<br><br>
                 命運的轉盤已經開始轉動...
             </p>
-            <button onclick="enterDraw()" class="bg-red-600 hover:bg-red-500 text-white px-8 py-3 rounded-full font-bold text-lg animate-pulse shadow-lg ring-4 ring-red-900">
+            <button onclick="enterDraw()" class="bg-red-600 hover:bg-red-500 text-white px-10 py-3 rounded-full font-bold text-xl animate-bounce shadow-lg ring-4 ring-red-900">
                 進入戰場
             </button>
         </div>
     </div>
 
-    <div id="view-drawing" class="hidden flex-1 flex flex-col fade-in">
-        <div class="text-center mb-8">
-            <div class="inline-block bg-blue-900/80 px-4 py-1 rounded-full text-sm border border-blue-400 mb-2">
-                第 <span id="round-number">1</span> 回合
+    <div id="view-drawing" class="hidden flex-1 flex flex-col fade-in z-20 h-full">
+        <div class="text-center mb-2 flex justify-between items-center px-4">
+            <div class="bg-blue-900/80 px-3 py-1 rounded-full text-xs border border-blue-400">
+                Round <span id="round-number">1</span>
             </div>
-            <h2 class="text-3xl font-bold mt-2">
-                贈禮者：<span id="current-giver" class="text-yellow-300 border-b-2 border-yellow-300">英雄A</span>
+            <h2 class="text-lg font-bold">
+                贈禮者：<span id="current-giver" class="text-yellow-300">英雄A</span>
             </h2>
         </div>
 
-        <div id="gift-box-area" class="flex-1 flex flex-col items-center justify-center cursor-pointer" onclick="revealReceiver()">
-            <div class="text-9xl animate-bounce">🎁</div>
-            <p class="mt-4 text-xl animate-pulse text-yellow-200">點擊打開神秘禮物...</p>
+        <div id="gift-box-area" class="flex-1 flex flex-col items-center justify-center cursor-pointer pb-20" onclick="revealReceiver()">
+            <div class="text-9xl animate-bounce drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)]">🎁</div>
+            <p class="mt-8 text-2xl animate-pulse text-yellow-200 font-bold">點擊開啟禮物</p>
         </div>
 
-        <div id="reveal-area" class="hidden flex-1 flex flex-col items-center justify-center">
+        <div id="reveal-area" class="hidden flex-1 flex flex-col items-center justify-center pb-10">
             <p class="text-gray-300 text-sm mb-2">禮物是送給...</p>
-            <div class="text-5xl font-bold text-green-400 mb-8 drop-shadow-lg" id="current-receiver">
+            <div class="text-5xl font-bold text-green-400 mb-8 drop-shadow-lg scale-110" id="current-receiver">
                 英雄B
             </div>
             
             <div class="w-full bg-white/10 backdrop-blur rounded-xl p-6 border border-white/20">
-                <p class="text-center mb-4 text-lg">接收者滿意這份禮物嗎？</p>
+                <p class="text-center mb-4 text-lg font-bold">英雄是否滿意？</p>
                 <div class="grid grid-cols-2 gap-4">
-                    <button onclick="handleFeedback(true)" class="bg-green-600 hover:bg-green-500 py-4 rounded-lg font-bold flex flex-col items-center gap-1 transform active:scale-95 transition">
-                        <span class="text-2xl">⚔️</span>
-                        <span>滿意 (進攻)</span>
+                    <button onclick="handleFeedback(true)" class="bg-green-600 hover:bg-green-500 py-6 rounded-xl font-bold flex flex-col items-center gap-2 transform active:scale-95 transition shadow-lg border-b-4 border-green-800">
+                        <span class="text-4xl">⚔️</span>
+                        <span>滿意</span>
                     </button>
-                    <button onclick="handleFeedback(false)" class="bg-red-600 hover:bg-red-500 py-4 rounded-lg font-bold flex flex-col items-center gap-1 transform active:scale-95 transition">
-                        <span class="text-2xl">😱</span>
-                        <span>不滿意 (被吃)</span>
+                    <button onclick="handleFeedback(false)" class="bg-red-600 hover:bg-red-500 py-6 rounded-xl font-bold flex flex-col items-center gap-2 transform active:scale-95 transition shadow-lg border-b-4 border-red-800">
+                        <span class="text-4xl">😱</span>
+                        <span>不滿意</span>
                     </button>
                 </div>
             </div>
         </div>
 
-        <div id="battle-result-area" class="hidden flex-1 flex flex-col items-center justify-center text-center p-4">
-            <div id="battle-emoji" class="text-8xl mb-4 shake"></div>
-            <p id="battle-text" class="text-xl font-bold leading-relaxed mb-8"></p>
-            <button onclick="nextRound()" class="w-full bg-yellow-500 text-black font-bold py-3 rounded-lg shadow-lg">
-                繼續下一位英雄
-            </button>
+        <div id="battle-result-area" class="hidden flex-1 flex flex-col justify-between py-4 relative">
+            
+            <div class="flex-1 flex items-center justify-center relative">
+                <div class="w-48 h-48 relative">
+                    <img src="icon.jpg" id="monster-img" class="w-full h-full rounded-full object-cover border-4 border-red-500 shadow-[0_0_30px_rgba(255,0,0,0.5)] z-10 relative">
+                    <div id="effect-overlay" class="absolute inset-0 flex items-center justify-center text-9xl z-50 pointer-events-none opacity-0">💥</div>
+                </div>
+            </div>
+
+            <div class="px-4 py-2 z-30">
+                <div class="bg-black/60 backdrop-blur border border-yellow-500/50 rounded-lg p-3 text-center min-h-[80px] flex items-center justify-center">
+                    <p id="battle-text" class="text-lg font-bold text-white leading-relaxed"></p>
+                </div>
+            </div>
+
+            <div class="flex-1 flex flex-col items-center justify-end pb-4 relative">
+                <div class="w-40 h-40 mb-2 relative group">
+                    <img id="hero-img" src="" class="w-full h-full object-cover rounded-xl border-2 border-white/50 shadow-2xl hero-idle">
+                    <div id="hero-damage-overlay" class="absolute inset-0 bg-red-600 mix-blend-overlay opacity-0 rounded-xl"></div>
+                </div>
+                
+                <h3 id="battle-hero-name" class="text-2xl font-bold text-yellow-300 drop-shadow-md bg-black/30 px-4 py-1 rounded-full">
+                    英雄名
+                </h3>
+            </div>
+
+            <div class="absolute bottom-4 right-4 z-50">
+                <button onclick="nextRound()" class="bg-yellow-500 hover:bg-yellow-400 text-black font-bold px-6 py-3 rounded-full shadow-xl animate-bounce">
+                    下一位 ➜
+                </button>
+            </div>
         </div>
     </div>
 
-    <div id="view-result" class="hidden flex-1 fade-in">
+    <div id="view-result" class="hidden flex-1 fade-in z-20 pb-10">
         <h2 class="text-2xl font-bold text-center mb-6 text-yellow-300">📜 戰役紀錄</h2>
         
-        <div class="bg-white/90 text-gray-900 rounded-xl shadow-2xl overflow-hidden">
+        <div class="bg-white/90 text-gray-900 rounded-xl shadow-2xl overflow-hidden mb-4">
             <div class="max-h-[60vh] overflow-y-auto" id="final-list">
                 </div>
         </div>
 
-        <div class="mt-6 flex gap-3">
-             <button onclick="downloadScreenshot()" class="flex-1 bg-blue-600 text-white font-bold py-3 rounded-lg shadow text-center">
-                📸 截圖保存
-            </button>
-            <button onclick="resetData()" class="flex-1 bg-gray-600 text-white font-bold py-3 rounded-lg shadow text-center">
+        <div class="flex gap-3">
+            <button onclick="resetData()" class="flex-1 bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 rounded-lg shadow text-center">
                 🔄 重新開始
             </button>
         </div>
@@ -145,67 +220,119 @@
 </div>
 
 <script>
-    // --- 資料與狀態 ---
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    function playSound(type) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        const now = audioCtx.currentTime;
+
+        if (type === 'attack') { // 揮劍 Shing
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(800, now);
+            osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
+            gainNode.gain.setValueAtTime(0.3, now);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+            osc.start(now);
+            osc.stop(now + 0.1);
+        } else if (type === 'hit') { // 被打 Bang
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(100, now);
+            osc.frequency.exponentialRampToValueAtTime(0.01, now + 0.3);
+            gainNode.gain.setValueAtTime(0.5, now);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+            osc.start(now);
+            osc.stop(now + 0.3);
+        } else if (type === 'win') { // 勝利 Fanfare
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(440, now);
+            osc.frequency.setValueAtTime(554, now + 0.1);
+            osc.frequency.setValueAtTime(659, now + 0.2);
+            gainNode.gain.setValueAtTime(0.2, now);
+            gainNode.gain.linearRampToValueAtTime(0, now + 0.6);
+            osc.start(now);
+            osc.stop(now + 0.6);
+        }
+    }
+</script>
+
+<script>
+    // --- 1. 資料設定 ---
     const defaultParticipants = [
         '晨豪', '佳瑜', '念慈', '詠筑', '惠子', 
         '亭潔', '士家', '冠宇', '敏毓', '柏茵', 
-        '英筑', '紫璇', '智堯'
+        '英筑', '紫璇', '智堯', '銘緯', '育姍'
     ];
     
+    // 性別與分組設定 (M=男, F=女)
+    // 預設名單性別表
+    const genderData = {
+        '晨豪': 'M', '佳瑜': 'F', '念慈': 'F', '詠筑': 'M', '惠子': 'F',
+        '亭潔': 'F', '士家': 'M', '冠宇': 'M', '敏毓': 'F', '柏茵': 'F',
+        '英筑': 'F', '紫璇': 'F', '智堯': 'M', '銘緯': 'M', '育姍': 'F'
+    };
+
+    // --- 男生分組映射 ---
+    // A: 智堯 (Q版)
+    // B: 冠宇, 詠筑 (日系帥氣)
+    // C: 晨豪, 士家 (成熟藝術)
+    // D: 銘緯 (花美男)
+    const maleGroupMap = {
+        '智堯': 'boy_a.jpg', 
+        '冠宇': 'boy_b.jpg', '詠筑': 'boy_b.jpg',
+        '晨豪': 'boy_c.jpg', '士家': 'boy_c.jpg',
+        '銘緯': 'boy_d.jpg'
+    };
+
+    // --- 女生分組映射 (精確指定) ---
+    // A: 佳瑜 (短髮)
+    // B: 念慈, 育姍, 惠子, 英筑 (眼鏡)
+    // C: 紫璇 (長髮)
+    // D: 柏茵 (飄逸)
+    // E: 敏毓, 亭潔 (披風)
+    const femaleGroupMap = {
+        '佳瑜': 'girl_a.jpg',
+        '念慈': 'girl_b.jpg', '育姍': 'girl_b.jpg', '惠子': 'girl_b.jpg', '英筑': 'girl_b.jpg',
+        '紫璇': 'girl_c.jpg',
+        '柏茵': 'girl_d.jpg',
+        '敏毓': 'girl_e.jpg', '亭潔': 'girl_e.jpg'
+    };
+
     let participants = [...defaultParticipants];
     let couple = { p1: '紫璇', p2: '智堯' };
     let drawOrder = [];
     let currentIndex = 0;
     let battleHistory = [];
+    let tempNewGender = 'M'; // 新增人員的預設性別
 
-    // 勝利與失敗腳本 (來自來源)
+    // 腳本
     const victoryScenarios = [
-        { emoji: '⚔️', text: '揮舞聖誕之劍，一劍斬斷麋鹿獸的鹿角，麋鹿獸落荒而逃！' },
-        { emoji: '🎁', text: '用禮物的溫暖之力融化了麋鹿獸的冰冷之心，牠感動得流下眼淚！' },
-        { emoji: '🔥', text: '召喚聖誕火焰，照亮黑暗！麋鹿獸被光明驅散！' },
-        { emoji: '❄️', text: '使用冰雪魔法將麋鹿獸冰封，牠被凍成了冰雕！' },
-        { emoji: '⭐', text: '召喚星光之力，萬千流星劃破天際，麋鹿獸被星光淨化！' },
-        { emoji: '🎵', text: '唱起聖誕頌歌，美妙的旋律讓麋鹿獸跳起舞來，忘記了戰鬥！' },
-        { emoji: '🍪', text: '拿出祖傳的聖誕餅乾，麋鹿獸聞到香味後乖乖投降！' },
-        { emoji: '🎄', text: '種下聖誕樹，綠色的生命力讓麋鹿獸回歸善良本性！' },
-        { emoji: '🔔', text: '搖響聖誕鈴鐺，清脆的鈴聲讓麋鹿獸暈頭轉向，狼狽逃走！' },
-        { emoji: '✨', text: '散發聖誕魔法粉塵，麋鹿獸在閃光中化為煙霧消散！' },
-        { emoji: '🎅', text: '召喚聖誕老人降臨，麋鹿獸一看到老闆來了立刻跪地求饒！' },
-        { emoji: '🦌', text: '用愛感化麋鹿獸，牠決定改邪歸正，加入聖誕老人的雪橇隊！' },
-        { emoji: '🌟', text: '引導北極星之光，神聖的光芒照耀大地，麋鹿獸跪地臣服！' },
-        { emoji: '🎺', text: '吹響勝利號角，震耳欲聾的聲響嚇得麋鹿獸抱頭鼠竄！' },
-        { emoji: '🍷', text: '請麋鹿獸喝聖誕熱紅酒，牠喝醉後睡著了，危機解除！' }
+        { emoji: '⚔️', text: '一劍斬斷了麋鹿獸的鹿角！' },
+        { emoji: '🔥', text: '聖誕火焰將麋鹿獸烤成了牛排！' },
+        { emoji: '❄️', text: '冰雪魔法把麋鹿獸凍成了冰雕！' },
+        { emoji: '👊', text: '一記上勾拳把麋鹿獸打飛到月球！' },
+        { emoji: '🎅', text: '召喚聖誕老人把麋鹿獸抓回去加班！' }
     ];
 
     const defeatScenarios = [
-        { emoji: '😱', text: '還沒反應過來，就被麋鹿獸一口吞下肚了！' },
-        { emoji: '💨', text: '想要逃跑，但麋鹿獸的速度太快，瞬間就被追上吃掉了！' },
-        { emoji: '🌀', text: '被麋鹿獸的黑暗漩渦捲入，消失在無盡的黑暗中...' },
-        { emoji: '❌', text: '武器沒有作用！麋鹿獸用鹿角一頂，就把英雄頂飛吃掉了！' },
-        { emoji: '😵', text: '麋鹿獸發出催眠光波，英雄睡著後就變成了點心...' },
-        { emoji: '🕳️', text: '踩到麋鹿獸設下的陷阱，掉進深淵被吃掉了！' },
-        { emoji: '💫', text: '被麋鹿獸的眼神迷惑，恍惚間就成為了牠的食物...' },
-        { emoji: '🌪️', text: '麋鹿獸召喚暴風雪，在風雪中迷失方向後被吞噬！' },
-        { emoji: '⚡', text: '麋鹿獸釋放雷電之力，被電暈後就被吃掉了！' },
-        { emoji: '🎭', text: '麋鹿獸變身成聖誕老人，英雄放下戒心後就被偷襲吃掉！' },
-        { emoji: '🌑', text: '麋鹿獸創造黑暗領域，在伸手不見五指的黑暗中被獵食！' },
-        { emoji: '🪤', text: '被麋鹿獸的禮物炸彈炸暈，倒地後就被吃掉了！' },
-        { emoji: '🎪', text: '麋鹿獸用魔法製造幻境，英雄在幻覺中迷失後被吃掉！' },
-        { emoji: '🌊', text: '麋鹿獸召喚寒冰波浪，被凍僵的英雄成為了冰棒點心！' },
-        { emoji: '🎯', text: '想要反擊但完全打不中！麋鹿獸靈活閃躲後反殺成功！' }
+        { emoji: '😱', text: '還沒反應過來就被一口吞掉了！' },
+        { emoji: '💨', text: '想逃跑但被麋鹿獸一腳踩扁！' },
+        { emoji: '😵', text: '被麋鹿獸的催眠光波變成了點心！' },
+        { emoji: '🔨', text: '武器斷裂，被麋鹿獸撞飛出地球！' },
+        { emoji: '🍖', text: '被當成聖誕大餐吃得乾乾淨淨！' }
     ];
 
-    // --- 初始化 ---
+    // --- 2. 初始化 ---
     window.onload = function() {
-        // PWA Service Worker 註冊
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js');
-        }
-
+        if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
         loadData();
         renderParticipants();
         
-        // 如果有上次未完成的進度
+        // 檢查是否有儲存的進度
         const savedState = localStorage.getItem('xmasState');
         if (savedState) {
             const state = JSON.parse(savedState);
@@ -216,12 +343,18 @@
         }
     };
 
-    // --- 邏輯函數 ---
-
+    // --- 3. 邏輯函數 ---
     function loadData() {
         const savedPart = localStorage.getItem('xmasParticipants');
         if (savedPart) participants = JSON.parse(savedPart);
         
+        // 載入性別 (如果有名單變動，這裡簡單合併)
+        const savedGender = localStorage.getItem('xmasGender');
+        if (savedGender) {
+            const savedG = JSON.parse(savedGender);
+            Object.assign(genderData, savedG);
+        }
+
         const savedCouple = localStorage.getItem('xmasCouple');
         if (savedCouple) couple = JSON.parse(savedCouple);
         
@@ -234,16 +367,34 @@
         const list = document.getElementById('participants-list');
         list.innerHTML = '';
         participants.forEach((p, index) => {
+            const g = genderData[p] || 'M';
+            const badge = g === 'M' ? 'bg-blue-600' : 'bg-pink-600';
+            const icon = g === 'M' ? '🚹' : '🚺';
+            
             const div = document.createElement('div');
-            div.className = 'flex items-center gap-2 bg-black/20 p-2 rounded';
+            div.className = 'flex items-center gap-2 bg-black/20 p-2 rounded hover:bg-black/30 transition';
             div.innerHTML = `
-                <span class="w-6 text-center text-gray-400">${index + 1}</span>
-                <span class="flex-1 font-bold">${p}</span>
-                <button onclick="removeParticipant(${index})" class="text-red-400 hover:text-red-200 px-2">✕</button>
+                <span class="w-6 text-center text-gray-400 font-mono">${index + 1}</span>
+                <span class="${badge} text-xs px-1 rounded">${icon}</span>
+                <span class="flex-1 font-bold tracking-wide">${p}</span>
+                <button onclick="removeParticipant(${index})" class="text-red-400 hover:text-red-200 px-3 font-bold">✕</button>
             `;
             list.appendChild(div);
         });
         updateCount();
+    }
+
+    function toggleGender() {
+        const btn = document.getElementById('gender-toggle');
+        if (tempNewGender === 'M') {
+            tempNewGender = 'F';
+            btn.innerText = '🚺';
+            btn.className = 'w-12 bg-pink-600 rounded text-xl flex items-center justify-center';
+        } else {
+            tempNewGender = 'M';
+            btn.innerText = '🚹';
+            btn.className = 'w-12 bg-blue-600 rounded text-xl flex items-center justify-center';
+        }
     }
 
     function addParticipant() {
@@ -251,6 +402,7 @@
         const name = input.value.trim();
         if (name) {
             participants.push(name);
+            genderData[name] = tempNewGender; // 儲存性別
             input.value = '';
             saveConfig();
             renderParticipants();
@@ -258,11 +410,10 @@
     }
 
     function removeParticipant(index) {
-        if (participants.length <= 3) {
-            alert('至少需要 3 人才能進行遊戲');
-            return;
-        }
+        if (participants.length <= 3) return alert('人數過少');
+        const name = participants[index];
         participants.splice(index, 1);
+        delete genderData[name];
         saveConfig();
         renderParticipants();
     }
@@ -276,22 +427,18 @@
         couple.p1 = document.getElementById('couple-1').value.trim();
         couple.p2 = document.getElementById('couple-2').value.trim();
         localStorage.setItem('xmasParticipants', JSON.stringify(participants));
+        localStorage.setItem('xmasGender', JSON.stringify(genderData));
         localStorage.setItem('xmasCouple', JSON.stringify(couple));
     }
 
+    // --- 4. 遊戲流程 ---
     function startStory() {
-        saveConfig(); // 確保夫妻設定已儲存
+        saveConfig();
         if (participants.length < 3) return alert('人數不足！');
-        
-        // 生成抽籤邏輯
-        if (!generateDrawOrder()) {
-            return alert('無法生成有效的抽籤順序 (可能是夫妻設定導致死結)，請重試！');
-        }
-
+        if (!generateDrawOrder()) return alert('無法生成有效順序 (請檢查夫妻設定)');
         showView('view-story');
     }
 
-    // 核心演算法：洗牌並檢查夫妻不互抽
     function generateDrawOrder() {
         const c1 = couple.p1;
         const c2 = couple.p2;
@@ -301,19 +448,14 @@
 
         while (!valid && attempts < 2000) {
             shuffled = [...participants];
-            // Fisher-Yates Shuffle
             for (let i = shuffled.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
             }
-
-            // 檢查邏輯：A -> B, B -> C ... Last -> A
             let isChainValid = true;
             for (let i = 0; i < shuffled.length; i++) {
                 const giver = shuffled[i];
                 const receiver = shuffled[(i + 1) % shuffled.length];
-                
-                // 禁止夫妻互抽
                 if ((giver === c1 && receiver === c2) || (giver === c2 && receiver === c1)) {
                     isChainValid = false;
                     break;
@@ -322,7 +464,6 @@
             if (isChainValid) valid = true;
             attempts++;
         }
-
         if (valid) {
             drawOrder = shuffled;
             currentIndex = 0;
@@ -337,12 +478,34 @@
         setupRound();
     }
 
+    // --- 核心邏輯：取得英雄圖片 ---
+    function getHeroImage(name) {
+        const gender = genderData[name] || 'M';
+        
+        if (gender === 'M') {
+            // 男生查表，沒在表內預設用 B
+            return maleGroupMap[name] || 'boy_b.jpg';
+        } else {
+            // 女生查表，沒在表內預設用 A
+            return femaleGroupMap[name] || 'girl_a.jpg';
+        }
+    }
+
     function setupRound() {
-        // 重置畫面狀態
+        // UI 重置
         document.getElementById('gift-box-area').classList.remove('hidden');
         document.getElementById('reveal-area').classList.add('hidden');
         document.getElementById('battle-result-area').classList.add('hidden');
         
+        // 圖片與動畫重置
+        const monsterImg = document.getElementById('monster-img');
+        const heroImg = document.getElementById('hero-img');
+        const effectOverlay = document.getElementById('effect-overlay');
+        
+        monsterImg.className = 'w-full h-full rounded-full object-cover border-4 border-red-500 shadow-xl z-10 relative'; // 移除動畫class
+        heroImg.className = 'w-full h-full object-cover rounded-xl border-2 border-white/50 shadow-2xl hero-idle'; // 恢復呼吸動畫
+        effectOverlay.className = 'absolute inset-0 flex items-center justify-center text-9xl z-50 pointer-events-none opacity-0';
+
         const giver = drawOrder[currentIndex];
         document.getElementById('current-giver').innerText = giver;
         document.getElementById('round-number').innerText = currentIndex + 1;
@@ -350,43 +513,71 @@
 
     function revealReceiver() {
         const receiver = drawOrder[(currentIndex + 1) % drawOrder.length];
-        
         document.getElementById('gift-box-area').classList.add('hidden');
         document.getElementById('reveal-area').classList.remove('hidden');
         document.getElementById('current-receiver').innerText = receiver;
+        
+        // 預先載入英雄圖片
+        const imgPath = getHeroImage(receiver);
+        document.getElementById('hero-img').src = imgPath;
+        document.getElementById('battle-hero-name').innerText = receiver;
     }
 
     function handleFeedback(isSatisfied) {
         const giver = drawOrder[currentIndex];
         const receiver = drawOrder[(currentIndex + 1) % drawOrder.length];
         
-        // 隨機選取腳本
         let scenario;
+        const monsterImg = document.getElementById('monster-img');
+        const heroImg = document.getElementById('hero-img');
+        const effectOverlay = document.getElementById('effect-overlay');
+        const battleText = document.getElementById('battle-text');
+
         if (isSatisfied) {
+            // 勝利 (Win)
             scenario = victoryScenarios[Math.floor(Math.random() * victoryScenarios.length)];
+            effectOverlay.innerText = scenario.emoji;
+            
+            // 動畫流程
+            playSound('attack'); // 音效
+            effectOverlay.classList.add('effect-hit'); // 特效 Emoji
+            
+            setTimeout(() => {
+                monsterImg.classList.add('monster-die'); // 麋鹿飛走
+                playSound('win');
+            }, 300);
+
         } else {
+            // 失敗 (Lose)
             scenario = defeatScenarios[Math.floor(Math.random() * defeatScenarios.length)];
+            
+            // 動畫流程
+            playSound('attack'); // 麋鹿吼叫前奏
+            monsterImg.classList.add('monster-attack'); // 麋鹿衝撞
+            
+            setTimeout(() => {
+                playSound('hit'); // 撞擊聲
+                heroImg.classList.remove('hero-idle'); // 停止呼吸
+                
+                // 隨機選擇死法
+                if (Math.random() > 0.5) {
+                    heroImg.classList.add('hero-fly-away'); // 飛走
+                } else {
+                    heroImg.classList.add('hero-dead'); // 倒地
+                }
+                
+                document.getElementById('hero-damage-overlay').classList.add('anim-damage'); // 紅光閃爍
+            }, 400);
         }
 
-        // 紀錄結果
-        battleHistory.push({
-            giver,
-            receiver,
-            isSatisfied,
-            scenario
-        });
-
-        // 顯示戰鬥結果
+        battleHistory.push({ giver, receiver, isSatisfied, scenario });
+        
+        // 顯示戰場
         document.getElementById('reveal-area').classList.add('hidden');
         document.getElementById('battle-result-area').classList.remove('hidden');
-        document.getElementById('battle-emoji').innerText = scenario.emoji;
-        document.getElementById('battle-text').innerText = scenario.text;
+        battleText.innerText = scenario.text;
         
-        // 儲存當前狀態以免手滑重整
-        localStorage.setItem('xmasState', JSON.stringify({
-            step: 'drawing',
-            battleHistory: battleHistory
-        }));
+        localStorage.setItem('xmasState', JSON.stringify({ step: 'drawing', battleHistory: battleHistory }));
     }
 
     function nextRound() {
@@ -399,10 +590,7 @@
     }
 
     function finishGame() {
-        localStorage.setItem('xmasState', JSON.stringify({
-            step: 'result',
-            battleHistory: battleHistory
-        }));
+        localStorage.setItem('xmasState', JSON.stringify({ step: 'result', battleHistory: battleHistory }));
         showView('view-result');
         renderResults(battleHistory);
     }
@@ -410,11 +598,9 @@
     function renderResults(history) {
         const container = document.getElementById('final-list');
         container.innerHTML = '';
-
-        history.forEach((battle, idx) => {
+        history.forEach((battle) => {
             const div = document.createElement('div');
             div.className = `p-4 border-b border-gray-200 ${battle.isSatisfied ? 'bg-green-50' : 'bg-red-50'}`;
-            
             div.innerHTML = `
                 <div class="flex items-center justify-between mb-2">
                     <div class="font-bold text-lg">
@@ -437,15 +623,11 @@
             localStorage.removeItem('xmasState');
             localStorage.removeItem('xmasParticipants');
             localStorage.removeItem('xmasCouple');
+            localStorage.removeItem('xmasGender');
             location.reload();
         }
     }
 
-    function downloadScreenshot() {
-        alert('請使用手機內建截圖功能保存結果！(網頁版自動截圖相容性較低)');
-    }
-
-    // --- 工具 ---
     function showView(id) {
         ['view-setup', 'view-story', 'view-drawing', 'view-result'].forEach(v => {
             document.getElementById(v).classList.add('hidden');
