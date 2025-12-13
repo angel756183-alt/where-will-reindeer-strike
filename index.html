@@ -15,8 +15,6 @@
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         /* --- 核心動畫區 --- */
-
-        /* 1. 麋鹿獸被打倒 (哭著飛走) */
         .monster-die { animation: monsterDie 1.5s forwards ease-in-out; }
         @keyframes monsterDie {
             0% { transform: scale(1); filter: none; }
@@ -25,26 +23,19 @@
             100% { transform: scale(0) rotate(720deg) translateY(-800px); opacity: 0; }
         }
 
-        /* 2. 麋鹿獸攻擊 (生氣留在原地) */
         .monster-attack-stay { animation: monsterAttackStay 0.8s forwards cubic-bezier(0.25, 1, 0.5, 1); }
         @keyframes monsterAttackStay {
             0% { transform: scale(1) translateY(0); filter: none; }
-            40% { transform: scale(0.9) translateY(-10px); } /* 蓄力 */
-            100% { 
-                transform: scale(1.3) translateY(40px); /* 往前壓迫 */
-                filter: drop-shadow(0 0 20px red) brightness(1.1); 
-                z-index: 30; 
-            }
+            40% { transform: scale(0.9) translateY(-10px); }
+            100% { transform: scale(1.3) translateY(40px); filter: drop-shadow(0 0 20px red) brightness(1.1); z-index: 30; }
         }
 
-        /* 3. 英雄 - 呼吸待機 */
         .hero-idle { animation: heroIdle 2s infinite ease-in-out; }
         @keyframes heroIdle {
             0%, 100% { transform: scale(1); filter: drop-shadow(0 0 5px rgba(255,255,255,0.5)); }
             50% { transform: scale(1.05); filter: drop-shadow(0 0 15px rgba(255,255,255,0.8)); }
         }
 
-        /* --- 英雄的 5 種死法 --- */
         .hero-fly-away { animation: heroFly 1.2s forwards ease-in; }
         @keyframes heroFly {
             0% { transform: scale(1) rotate(0); opacity: 1; }
@@ -141,7 +132,7 @@
     <div id="view-story" class="hidden flex-1 flex flex-col justify-center items-center text-center fade-in p-4 z-20">
         <div class="bg-black/60 p-6 rounded-xl border border-red-500/50 shadow-2xl backdrop-blur">
             <div class="w-32 h-32 mx-auto mb-4 rounded-full overflow-hidden border-4 border-red-500 shadow-lg">
-                <img src="icon.jpg" class="w-full h-full object-cover animate-pulse">
+                <img src="monster_story.jpg" class="w-full h-full object-cover animate-pulse">
             </div>
             <h2 class="text-2xl font-bold text-red-400 mb-4">⚠️ 警報：災難降臨</h2>
             <p class="text-lg leading-relaxed mb-6 text-gray-100 text-left">
@@ -245,7 +236,6 @@
 
 <script>
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    
     function playSound(type) {
         if (audioCtx.state === 'suspended') audioCtx.resume();
         const osc = audioCtx.createOscillator();
@@ -253,48 +243,17 @@
         osc.connect(gainNode);
         gainNode.connect(audioCtx.destination);
         const now = audioCtx.currentTime;
-
-        if (type === 'attack') { 
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(100, now);
-            osc.frequency.linearRampToValueAtTime(50, now + 0.5);
-            gainNode.gain.setValueAtTime(0.2, now);
-            gainNode.gain.linearRampToValueAtTime(0, now + 0.5);
-            osc.start(now);
-            osc.stop(now + 0.5);
-        } else if (type === 'hit') { 
-            osc.type = 'square';
-            osc.frequency.setValueAtTime(150, now);
-            osc.frequency.exponentialRampToValueAtTime(0.01, now + 0.3);
-            gainNode.gain.setValueAtTime(0.5, now);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
-            osc.start(now);
-            osc.stop(now + 0.3);
-        } else if (type === 'sword') { 
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(600, now);
-            osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
-            gainNode.gain.setValueAtTime(0.3, now);
-            gainNode.gain.linearRampToValueAtTime(0, now + 0.1);
-            osc.start(now);
-            osc.stop(now + 0.1);
-        } else if (type === 'win') { 
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(440, now);
-            osc.frequency.setValueAtTime(554, now + 0.1);
-            osc.frequency.setValueAtTime(659, now + 0.2);
-            gainNode.gain.setValueAtTime(0.2, now);
-            gainNode.gain.linearRampToValueAtTime(0, now + 0.6);
-            osc.start(now);
-            osc.stop(now + 0.6);
-        }
+        if (type === 'attack') { osc.type = 'sawtooth'; osc.frequency.setValueAtTime(100, now); osc.frequency.linearRampToValueAtTime(50, now + 0.5); gainNode.gain.setValueAtTime(0.2, now); gainNode.gain.linearRampToValueAtTime(0, now + 0.5); osc.start(now); osc.stop(now + 0.5); } 
+        else if (type === 'hit') { osc.type = 'square'; osc.frequency.setValueAtTime(150, now); osc.frequency.exponentialRampToValueAtTime(0.01, now + 0.3); gainNode.gain.setValueAtTime(0.5, now); gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3); osc.start(now); osc.stop(now + 0.3); } 
+        else if (type === 'sword') { osc.type = 'sawtooth'; osc.frequency.setValueAtTime(600, now); osc.frequency.exponentialRampToValueAtTime(100, now + 0.1); gainNode.gain.setValueAtTime(0.3, now); gainNode.gain.linearRampToValueAtTime(0, now + 0.1); osc.start(now); osc.stop(now + 0.1); } 
+        else if (type === 'win') { osc.type = 'triangle'; osc.frequency.setValueAtTime(440, now); osc.frequency.setValueAtTime(554, now + 0.1); osc.frequency.setValueAtTime(659, now + 0.2); gainNode.gain.setValueAtTime(0.2, now); gainNode.gain.linearRampToValueAtTime(0, now + 0.6); osc.start(now); osc.stop(now + 0.6); }
     }
 </script>
 
 <script>
     // --- 1. 資料設定 ---
     
-    // !!! 新增：圖片清單 !!!
+    // 生氣圖清單 (隨機抽)
     const angryImages = [
         "reindeer_heroes_running.jpg",
         "reindeer_heroes_presents.jpg",
@@ -302,38 +261,48 @@
         "reindeer_heroes_magic_battle.jpg"
     ];
 
+    // 戰敗圖清單 (隨機抽)
     const deadImages = [
         "monster_dead_crowd.jpg",
         "monster_dead_scarf_full.jpg",
         "monster_dead_scarf_simple.jpg",
-        "monster_dead_scarf_close.jpg" // 這裡增加了剛傳的腳印那張(假設檔名, 請確認)
+        "monster_dead_scarf_close.jpg"
     ];
 
+    // 預設名單
     const defaultParticipants = [
         '晨豪', '佳瑜', '念慈', '詠筑', '惠子', 
         '亭潔', '士家', '冠宇', '敏毓', '柏茵', 
         '英筑', '紫璇', '智堯', '銘緯', '育姍'
     ];
     
+    // 性別資料 (注意：詠筑設為F，因為您指定了 girl_j.jpg)
     const genderData = {
-        '晨豪': 'M', '佳瑜': 'F', '念慈': 'F', '詠筑': 'M', '惠子': 'F',
+        '晨豪': 'M', '佳瑜': 'F', '念慈': 'F', '詠筑': 'F', '惠子': 'F',
         '亭潔': 'F', '士家': 'M', '冠宇': 'M', '敏毓': 'F', '柏茵': 'F',
         '英筑': 'F', '紫璇': 'F', '智堯': 'M', '銘緯': 'M', '育姍': 'F'
     };
 
+    // --- 英雄照片對應 (修正版) ---
     const maleGroupMap = {
         '智堯': 'boy_a.jpg', 
-        '冠宇': 'boy_b.jpg', '詠筑': 'boy_b.jpg',
-        '晨豪': 'boy_c.jpg', '士家': 'boy_c.jpg',
-        '銘緯': 'boy_d.jpg'
+        '冠宇': 'boy_b.jpg', 
+        '晨豪': 'boy_c.jpg', 
+        '士家': 'boy_d.jpg',
+        '銘緯': 'boy_e.jpg'
     };
 
     const femaleGroupMap = {
         '佳瑜': 'girl_a.jpg',
-        '念慈': 'girl_b.jpg', '育姍': 'girl_b.jpg', '惠子': 'girl_b.jpg', '英筑': 'girl_b.jpg',
-        '紫璇': 'girl_c.jpg',
-        '柏茵': 'girl_d.jpg',
-        '敏毓': 'girl_e.jpg', '亭潔': 'girl_e.jpg'
+        '念慈': 'girl_b.jpg', 
+        '育姍': 'girl_c.jpg',
+        '英筑': 'girl_d.jpg',
+        '惠子': 'girl_e.jpg',
+        '紫璇': 'girl_f.jpg',
+        '柏茵': 'girl_g.jpg',
+        '敏毓': 'girl_h.jpg',
+        '亭潔': 'girl_i.jpg',
+        '詠筑': 'girl_j.jpg'
     };
 
     let participants = [...defaultParticipants];
@@ -502,9 +471,14 @@
     }
 
     function getHeroImage(name) {
+        // 先檢查是否有指定對應圖
+        if (maleGroupMap[name]) return maleGroupMap[name];
+        if (femaleGroupMap[name]) return femaleGroupMap[name];
+
+        // 沒有指定的話，給預設圖
         const gender = genderData[name] || 'M';
-        if (gender === 'M') return maleGroupMap[name] || 'boy_b.jpg';
-        else return femaleGroupMap[name] || 'girl_a.jpg';
+        if (gender === 'M') return 'boy_e.jpg'; // 預設男生
+        else return 'girl_a.jpg'; // 預設女生
     }
 
     // --- 功能：隨機挑選一張圖片 ---
@@ -523,8 +497,7 @@
         const heroImg = document.getElementById('hero-img');
         const effectOverlay = document.getElementById('effect-overlay');
         
-        monsterImg.src = 'icon.jpg'; // 重置回預設圖
-        // 重置動畫 class (移除 die 和 attack)
+        monsterImg.src = 'icon.jpg'; // 預設圖
         monsterImg.className = 'w-full h-full rounded-full object-cover border-4 border-red-500 shadow-xl z-10 relative';
         
         heroImg.className = 'w-full h-full object-cover rounded-xl border-2 border-white/50 shadow-2xl hero-idle';
@@ -575,7 +548,7 @@
             heroImg.classList.remove('shake-light');
             
             if (isSatisfied) {
-                // 勝利：變哭臉(隨機) -> 飛走
+                // 勝利：隨機戰敗圖 -> 飛走
                 scenario = victoryScenarios[Math.floor(Math.random() * victoryScenarios.length)];
                 battleText.innerText = scenario.text;
                 effectOverlay.innerText = scenario.emoji;
@@ -584,23 +557,19 @@
                 effectOverlay.classList.add('effect-hit');
                 
                 setTimeout(() => {
-                    // *** 設定隨機戰敗圖 ***
                     monsterImg.src = getRandomImage('dead');
-                    
                     monsterImg.classList.add('monster-die');
                     playSound('win');
                 }, 300);
 
             } else {
-                // 失敗：變生氣臉(隨機) -> 原地攻擊 -> 送禮者消失
+                // 失敗：隨機生氣圖 -> 原地攻擊
                 scenario = defeatScenarios[Math.floor(Math.random() * defeatScenarios.length)];
                 battleText.innerText = scenario.text;
                 
                 playSound('attack'); 
                 
-                // *** 設定隨機生氣圖 ***
                 monsterImg.src = getRandomImage('angry');
-
                 monsterImg.classList.add('monster-attack-stay'); 
                 
                 setTimeout(() => {
@@ -642,7 +611,6 @@
         history.forEach((battle) => {
             const div = document.createElement('div');
             div.className = `p-4 border-b border-gray-200 ${battle.isSatisfied ? 'bg-green-50' : 'bg-red-50'}`;
-            // 結果頁顯示：
             const resultText = battle.isSatisfied ? '✅ 成功擊退' : `💀 ${battle.giver} 被吃了`;
             
             div.innerHTML = `
