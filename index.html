@@ -14,7 +14,9 @@
         .fade-in { animation: fadeIn 0.5s ease-in; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* --- 核心動畫區 --- */
+        /* --- 核心動畫區 (已修改為原地發紅變大) --- */
+        
+        /* 1. 麋鹿戰敗 (這個不動) */
         .monster-die { animation: monsterDie 1.5s forwards ease-in-out; }
         @keyframes monsterDie {
             0% { transform: scale(1); filter: none; }
@@ -23,13 +25,22 @@
             100% { transform: scale(0) rotate(720deg) translateY(-800px); opacity: 0; }
         }
 
-        .monster-attack-stay { animation: monsterAttackStay 0.8s forwards cubic-bezier(0.25, 1, 0.5, 1); }
-        @keyframes monsterAttackStay {
-            0% { transform: scale(1) translateY(0); filter: none; }
-            40% { transform: scale(0.9) translateY(-10px); }
-            100% { transform: scale(1.3) translateY(40px); filter: drop-shadow(0 0 20px red) brightness(1.1); z-index: 30; }
+        /* 2. [關鍵修改] 麋鹿暴怒攻擊 (原地變紅、變大、不位移) */
+        .monster-enrage { animation: monsterEnrage 0.8s forwards ease-out; }
+        @keyframes monsterEnrage {
+            0% { transform: scale(1); filter: none; }
+            10% { transform: scale(1.05); filter: sepia(1) saturate(300%) hue-rotate(-50deg); } /* 開始變紅 */
+            50% { 
+                transform: scale(1.15); /* 放大 */
+                filter: sepia(1) saturate(500%) hue-rotate(-50deg) drop-shadow(0 0 20px red); /* 鮮紅 + 紅光 */
+            }
+            100% { 
+                transform: scale(1.1); /* 保持稍大 */
+                filter: sepia(1) saturate(500%) hue-rotate(-50deg) drop-shadow(0 0 10px darkred); 
+            }
         }
 
+        /* 3. 英雄動畫 (保持原樣) */
         .hero-idle { animation: heroIdle 2s infinite ease-in-out; }
         @keyframes heroIdle {
             0%, 100% { transform: scale(1); filter: drop-shadow(0 0 5px rgba(255,255,255,0.5)); }
@@ -187,7 +198,7 @@
             
             <div class="flex-1 flex items-center justify-center relative z-20">
                 <div class="w-52 h-52 relative">
-                    <img src="icon.jpg" id="monster-img" class="w-full h-full rounded-full object-cover object-top border-4 border-red-500 shadow-[0_0_30px_rgba(255,0,0,0.5)] z-10 relative">
+                    <img src="icon.jpg" id="monster-img" class="w-full h-full rounded-full object-cover object-top border-4 border-red-500 shadow-[0_0_30px_rgba(255,0,0,0.5)] z-10 relative transition-transform">
                     <div id="effect-overlay" class="absolute inset-0 flex items-center justify-center text-9xl z-50 pointer-events-none opacity-0">💥</div>
                 </div>
             </div>
@@ -251,7 +262,7 @@
 </script>
 
 <script>
-    // --- 1. 資料設定 ---
+    // --- 1. 資料設定 (V3.0 天條文案) ---
     
     // 生氣圖清單 (隨機抽)
     const angryImages = [
@@ -501,7 +512,9 @@
         monsterImg.src = 'icon.jpg'; 
         // 修正：加入 object-top
         monsterImg.className = 'w-full h-full rounded-full object-cover object-top border-4 border-red-500 shadow-xl z-10 relative';
-        
+        // 清除之前的動畫 class
+        monsterImg.classList.remove('monster-enrage', 'monster-die');
+
         // 修正：加入 object-top
         heroImg.className = 'w-full h-full object-cover object-top rounded-xl border-2 border-white/50 shadow-2xl hero-idle';
         effectOverlay.className = 'absolute inset-0 flex items-center justify-center text-9xl z-50 pointer-events-none opacity-0';
@@ -566,14 +579,15 @@
                 }, 300);
 
             } else {
-                // 失敗：隨機生氣圖
+                // 失敗：隨機生氣圖 (這裡修改為：麋鹿原地暴怒)
                 scenario = defeatScenarios[Math.floor(Math.random() * defeatScenarios.length)];
                 battleText.innerText = scenario.text;
                 
                 playSound('attack'); 
                 
                 monsterImg.src = getRandomImage('angry');
-                monsterImg.classList.add('monster-attack-stay'); 
+                // 使用新的 class: monster-enrage (原地變紅變大)
+                monsterImg.classList.add('monster-enrage'); 
                 
                 setTimeout(() => {
                     playSound('hit');
