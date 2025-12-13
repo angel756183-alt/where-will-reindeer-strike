@@ -111,7 +111,7 @@
             </h2>
             
             <div id="participants-list" class="space-y-2 max-h-60 overflow-y-auto mb-4 pr-1">
-                </div>
+            </div>
 
             <div class="flex gap-2 mb-2">
                 <input type="text" id="new-name" placeholder="輸入新英雄" class="flex-1 bg-white/20 border border-white/30 rounded px-3 py-2 text-white placeholder-gray-300 focus:outline-none focus:border-yellow-400">
@@ -231,7 +231,7 @@
         
         <div class="bg-white/90 text-gray-900 rounded-xl shadow-2xl overflow-hidden mb-4">
             <div class="max-h-[60vh] overflow-y-auto" id="final-list">
-                </div>
+            </div>
         </div>
 
         <div class="flex gap-3">
@@ -293,6 +293,22 @@
 
 <script>
     // --- 1. 資料設定 ---
+    
+    // !!! 新增：圖片清單 !!!
+    const angryImages = [
+        "reindeer_heroes_running.jpg",
+        "reindeer_heroes_presents.jpg",
+        "reindeer_heroes_battle.jpg",
+        "reindeer_heroes_magic_battle.jpg"
+    ];
+
+    const deadImages = [
+        "monster_dead_crowd.jpg",
+        "monster_dead_scarf_full.jpg",
+        "monster_dead_scarf_simple.jpg",
+        "monster_dead_scarf_close.jpg" // 這裡增加了剛傳的腳印那張(假設檔名, 請確認)
+    ];
+
     const defaultParticipants = [
         '晨豪', '佳瑜', '念慈', '詠筑', '惠子', 
         '亭潔', '士家', '冠宇', '敏毓', '柏茵', 
@@ -491,6 +507,13 @@
         else return femaleGroupMap[name] || 'girl_a.jpg';
     }
 
+    // --- 功能：隨機挑選一張圖片 ---
+    function getRandomImage(type) {
+        const list = type === 'angry' ? angryImages : deadImages;
+        const randomIndex = Math.floor(Math.random() * list.length);
+        return list[randomIndex];
+    }
+
     function setupRound() {
         document.getElementById('gift-box-area').classList.remove('hidden');
         document.getElementById('reveal-area').classList.add('hidden');
@@ -500,7 +523,8 @@
         const heroImg = document.getElementById('hero-img');
         const effectOverlay = document.getElementById('effect-overlay');
         
-        monsterImg.src = 'icon.jpg'; // 重置
+        monsterImg.src = 'icon.jpg'; // 重置回預設圖
+        // 重置動畫 class (移除 die 和 attack)
         monsterImg.className = 'w-full h-full rounded-full object-cover border-4 border-red-500 shadow-xl z-10 relative';
         
         heroImg.className = 'w-full h-full object-cover rounded-xl border-2 border-white/50 shadow-2xl hero-idle';
@@ -551,7 +575,7 @@
             heroImg.classList.remove('shake-light');
             
             if (isSatisfied) {
-                // 勝利：變哭臉 -> 飛走
+                // 勝利：變哭臉(隨機) -> 飛走
                 scenario = victoryScenarios[Math.floor(Math.random() * victoryScenarios.length)];
                 battleText.innerText = scenario.text;
                 effectOverlay.innerText = scenario.emoji;
@@ -560,19 +584,23 @@
                 effectOverlay.classList.add('effect-hit');
                 
                 setTimeout(() => {
-                    monsterImg.src = 'monster_dead.jpg'; // 切換哭哭臉
+                    // *** 設定隨機戰敗圖 ***
+                    monsterImg.src = getRandomImage('dead');
+                    
                     monsterImg.classList.add('monster-die');
                     playSound('win');
                 }, 300);
 
             } else {
-                // 失敗：變生氣臉 -> 原地攻擊 -> 送禮者消失
+                // 失敗：變生氣臉(隨機) -> 原地攻擊 -> 送禮者消失
                 scenario = defeatScenarios[Math.floor(Math.random() * defeatScenarios.length)];
                 battleText.innerText = scenario.text;
                 
                 playSound('attack'); 
                 
-                monsterImg.src = 'monster_angry.jpg'; // 切換生氣臉
+                // *** 設定隨機生氣圖 ***
+                monsterImg.src = getRandomImage('angry');
+
                 monsterImg.classList.add('monster-attack-stay'); 
                 
                 setTimeout(() => {
