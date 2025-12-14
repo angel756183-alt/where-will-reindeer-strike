@@ -214,7 +214,7 @@
                 </div>
             </div>
 
-            <div class="flex-1 flex flex-col items-center justify-end pb-4 relative">
+            <div id="hero-display-area" class="flex-1 flex flex-col items-center justify-end pb-4 relative">
                 <div class="w-40 h-40 mb-2 relative group z-20">
                     <img id="hero-img" src="" class="w-full h-full object-cover object-top rounded-xl border-2 border-white/50 shadow-2xl hero-idle">
                     <div id="hero-damage-overlay" class="absolute inset-0 bg-red-600 mix-blend-overlay opacity-0 rounded-xl"></div>
@@ -565,6 +565,7 @@
         
         const videoElement = document.getElementById('battle-video');
         videoElement.classList.add('hidden');
+        document.getElementById('hero-display-area').classList.remove('hidden'); // 恢復顯示英雄區
         videoElement.pause();
         videoElement.src = ""; // 清空來源
 
@@ -648,12 +649,13 @@
 
         // 重置並播放影片
         monsterImg.classList.add('hidden'); // 隱藏原本的麋鹿圖
+        document.getElementById('hero-display-area').classList.add('hidden'); // 隱藏底部英雄圖 (新增)
+        
         videoElement.classList.remove('hidden');
         videoElement.src = videoName;
         videoElement.play().catch(e => {
             console.log("影片播放失敗 (可能是檔案不存在)", e);
-            // 如果影片播放失敗 (例如檔案沒上傳)，可以考慮顯示回原本的圖
-            // 但依需求先保留影片框
+            // 如果影片播放失敗，可能需要把原本的圖顯示回來 (但目前先不處理)
         });
 
         setTimeout(() => {
