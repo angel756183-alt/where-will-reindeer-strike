@@ -244,11 +244,35 @@
             </div>
 
             <div class="absolute bottom-4 right-4 z-50">
-                <button onclick="nextRound()" class="bg-yellow-500 hover:bg-yellow-400 text-black font-bold px-6 py-3 rounded-full shadow-xl animate-bounce">
+                <button id="next-round-btn" onclick="nextRound()" class="bg-yellow-500 hover:bg-yellow-400 text-black font-bold px-6 py-3 rounded-full shadow-xl animate-bounce">
                     下一位 ➜
                 </button>
             </div>
         </div>
+    </div>
+
+    <div id="view-grand-finale" class="hidden flex-1 flex flex-col items-center justify-center fade-in z-20 pb-10">
+        <h2 class="text-4xl font-bold text-yellow-300 mb-6 drop-shadow-lg glitch-text">🏆 戰役最終結果 🏆</h2>
+        
+        <div class="flex items-center gap-8 mb-6 text-2xl font-bold bg-black/40 p-4 rounded-xl border border-white/20">
+            <div class="text-center">
+                <span class="block text-sm text-yellow-500 mb-1">HEROES</span>
+                <span id="final-score-hero" class="text-4xl text-green-400">0</span>
+            </div>
+            <span class="text-3xl text-gray-400">VS</span>
+            <div class="text-center">
+                <span class="block text-sm text-red-500 mb-1">MONSTER</span>
+                <span id="final-score-monster" class="text-4xl text-red-400">0</span>
+            </div>
+        </div>
+
+        <div class="w-full max-w-4xl aspect-video bg-black rounded-xl overflow-hidden shadow-2xl mb-8 border border-white/10 relative">
+            <video id="final-video" class="w-full h-full object-contain" playsinline webkit-playsinline controls></video>
+        </div>
+
+        <button onclick="showResultsList()" class="bg-gradient-to-r from-yellow-600 to-amber-700 hover:from-yellow-500 hover:to-amber-600 text-white font-bold py-4 px-10 rounded-full text-xl shadow-lg ring-2 ring-yellow-500/50 animate-pulse">
+            📊 點我觀看戰役紀錄
+        </button>
     </div>
 
     <div id="view-result" class="hidden flex-1 fade-in z-20 pb-10">
@@ -260,9 +284,11 @@
         </div>
 
         <div class="flex gap-3">
+        <div class="flex gap-3">
             <button onclick="resetData()" class="flex-1 bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 rounded-lg shadow text-center">
-                🔄 重新開始
+                🔄 再戰一局
             </button>
+        </div>
         </div>
     </div>
 
@@ -438,6 +464,14 @@
             if (state.step === 'result') {
                 showView('view-result');
                 renderResults(state.battleHistory);
+            } else if (state.step === 'finale') {
+                // 如果是在結局畫面重整
+                participants = JSON.parse(localStorage.getItem('xmasParticipants')); // 確保有載入名單長度
+                showView('view-grand-finale');
+                showGrandFinale(); // 前端暫存的 history 可能會空，需注意
+                // 這裡簡化處理：若重整導致 battleHistory 為空，可能需從 localStorage 讀回
+                if (state.battleHistory) battleHistory = state.battleHistory;
+                showGrandFinale();
             }
         }
     };
@@ -619,6 +653,18 @@
         document.getElementById('drawing-header').classList.remove('hidden'); // 恢復顯示頂部資訊
         document.getElementById('current-giver').innerText = giver;
         document.getElementById('round-number').innerText = currentIndex + 1;
+
+        // 檢查是否為最後一局 (第15局)
+        const nextBtn = document.getElementById('next-round-btn');
+        if (currentIndex === participants.length - 1) {
+            nextBtn.innerText = "📜 公布戰役結果";
+            nextBtn.classList.remove('bg-yellow-500', 'hover:bg-yellow-400');
+            nextBtn.classList.add('bg-red-600', 'hover:bg-red-500', 'text-white'); // 改成顯眼的紅色
+        } else {
+            nextBtn.innerText = "下一位 ➜";
+            nextBtn.classList.add('bg-yellow-500', 'hover:bg-yellow-400');
+            nextBtn.classList.remove('bg-red-600', 'hover:bg-red-500', 'text-white');
+        }
     }
 
     function revealReceiver() {
@@ -767,16 +813,47 @@
     function nextRound() {
         if (currentIndex < drawOrder.length - 1) {
             currentIndex++;
-            setupRound();
+            enterDraw();
         } else {
-            finishGame();
+            // 已結束，顯示大結局
+            showGrandFinale();
         }
     }
+    
+    function showGrandFinale() {
+        document.getElementById('view-story').classList.add('hidden');
+        document.getElementById('view-grand-finale').classList.remove('hidden');
+        
+        let heroWins = 0;
+        let monsterWins = 0;
+        
+        battleHistory.forEach(record => {
+            if (record.isSatisfied) heroWins++;
+            else monsterWins++;
+        });
+        
+        document.getElementById('final-score-hero').innerText = heroWins;
+        document.getElementById('final-score-monster').innerText = monsterWins;
+        
+        const videoElement = document.getElementById('final-video');
+        let finalVideoName = '';
+        
+        if (heroWins > monsterWins) finalVideoName = 'victory.mp4';
+        else if (monsterWins > heroWins) finalVideoName = 'loss.mp4';
+        else finalVideoName = 'peace.mp4';
+        
+        videoElement.src = finalVideoName;
+        videoElement.play().catch(e => console.log("結局影片播放失敗", e));
+        
+        // 儲存狀態，確保重整後能回來
+        localStorage.setItem('xmasState', JSON.stringify({ step: 'finale', battleHistory: battleHistory }));
+    }
 
-    function finishGame() {
-        localStorage.setItem('xmasState', JSON.stringify({ step: 'result', battleHistory: battleHistory }));
+    function showResultsList() {
+        document.getElementById('view-grand-finale').classList.add('hidden');
         showView('view-result');
         renderResults(battleHistory);
+        localStorage.setItem('xmasState', JSON.stringify({ step: 'result', battleHistory: battleHistory }));
     }
 
     function renderResults(history) {
