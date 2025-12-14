@@ -175,7 +175,7 @@
 
         <div id="reveal-area" class="hidden flex-1 flex flex-col items-center justify-center pb-10">
             <p class="text-gray-300 text-sm mb-2">禮物是送給...</p>
-            <div class="text-5xl font-bold text-green-400 mb-8 drop-shadow-lg scale-110" id="current-receiver">
+            <div class="text-4xl font-bold text-green-400 mb-4 drop-shadow-lg" id="current-receiver">
                 英雄B
             </div>
             
@@ -188,7 +188,7 @@
                     </button>
                     <button onclick="handleFeedback(false)" class="bg-red-600 hover:bg-red-500 py-4 px-2 rounded-xl font-bold flex flex-col items-center justify-center gap-2 transform active:scale-95 transition shadow-lg border-b-4 border-red-800 h-full">
                         <span class="text-3xl">😱</span>
-                        <span class="text-sm text-center leading-tight">不滿意</span>
+                        <span id="dissatisfied-text" class="text-sm text-center leading-tight">不滿意</span>
                     </button>
                 </div>
             </div>
@@ -545,8 +545,11 @@
         document.getElementById('hero-img').src = imgPath;
         document.getElementById('battle-hero-name').innerText = receiver;
 
-        const satisfiedTexts = ["我超滿意！開啟英雄攻擊", "滿意，守護城市"];
-        document.getElementById('satisfied-text').innerText = satisfiedTexts[Math.floor(Math.random() * satisfiedTexts.length)];
+        const satisfiedTexts = ["我超滿意！<br>開啟英雄攻擊", "滿意，守護城市"];
+        document.getElementById('satisfied-text').innerHTML = satisfiedTexts[Math.floor(Math.random() * satisfiedTexts.length)];
+
+        const dissatisfiedTexts = ["有點失望…看看麋鹿反擊", "不滿意，危機降臨"];
+        document.getElementById('dissatisfied-text').innerHTML = dissatisfiedTexts[Math.floor(Math.random() * dissatisfiedTexts.length)];
     }
 
     function handleFeedback(isSatisfied) {
