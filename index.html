@@ -266,8 +266,8 @@
             </div>
         </div>
 
-        <div class="w-full max-w-4xl aspect-video bg-black rounded-xl overflow-hidden shadow-2xl mb-8 border border-white/10 relative">
-            <video id="final-video" class="w-full h-full object-contain" playsinline webkit-playsinline controls></video>
+        <div class="w-full max-w-4xl h-[60vh] relative flex items-center justify-center mb-8">
+            <video id="final-video" class="w-full h-full object-contain rounded-xl shadow-2xl" playsinline webkit-playsinline controls></video>
         </div>
 
         <button onclick="showResultsList()" class="bg-gradient-to-r from-yellow-600 to-amber-700 hover:from-yellow-500 hover:to-amber-600 text-white font-bold py-4 px-10 rounded-full text-xl shadow-lg ring-2 ring-yellow-500/50 animate-pulse">
@@ -283,12 +283,10 @@
             </div>
         </div>
 
-        <div class="flex gap-3">
-        <div class="flex gap-3">
-            <button onclick="resetData()" class="flex-1 bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 rounded-lg shadow text-center">
+        <div class="flex flex-col items-center justify-center gap-3">
+            <button onclick="resetData()" class="w-full max-w-xs bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 rounded-lg shadow-lg text-center transform transition hover:scale-105">
                 🔄 再戰一局
             </button>
-        </div>
         </div>
     </div>
 
@@ -821,6 +819,7 @@
     }
     
     function showGrandFinale() {
+        window.scrollTo(0, 0); // 確保捲動到最上方
         document.getElementById('view-story').classList.add('hidden');
         document.getElementById('view-grand-finale').classList.remove('hidden');
         
@@ -850,6 +849,7 @@
     }
 
     function showResultsList() {
+        window.scrollTo(0, 0); // 確保捲動到最上方
         document.getElementById('view-grand-finale').classList.add('hidden');
         showView('view-result');
         renderResults(battleHistory);
