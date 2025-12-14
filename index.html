@@ -156,9 +156,6 @@
                 進入戰場
             </button>
             <div class="mt-4">
-                <button onclick="debugSkipToRound15()" class="bg-gray-700/50 hover:bg-gray-600 text-gray-300 text-xs py-2 px-3 rounded border border-gray-600">
-                    ⚡ (測試用) 跳到第15局
-                </button>
             </div>
         </div>
     </div>
@@ -913,29 +910,7 @@
         location.reload();
     }
 
-    function debugSkipToRound15() {
-        // 模擬前14局的戰鬥紀錄
-        battleHistory = [];
-        for (let i = 0; i < 14; i++) {
-            const isHeroWon = Math.random() > 0.5;
-            battleHistory.push({
-                giver: drawOrder[i],
-                receiver: drawOrder[(i + 1) % drawOrder.length],
-                isSatisfied: isHeroWon,
-                scenario: { text: "模擬戰鬥", emoji: isHeroWon ? "✨" : "😨" }
-            });
-        }
-        currentIndex = 14; // 設定為第15位 (Index 14)
-        
-        // 更新狀態並進入抽籤畫面
-        document.getElementById('view-story').classList.add('hidden');
-        document.getElementById('view-grand-finale').classList.add('hidden');
-        document.getElementById('view-result').classList.add('hidden');
-        document.getElementById('view-drawing').classList.remove('hidden');
-        document.getElementById('gift-box-area').classList.remove('hidden'); // 確保禮物盒顯示
-        
-        setupRound();
-    }
+
 
     function showView(id) {
         ['view-setup', 'view-story', 'view-drawing', 'view-result'].forEach(v => {
