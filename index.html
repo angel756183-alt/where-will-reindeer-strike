@@ -826,6 +826,7 @@
     
     function showGrandFinale() {
         document.getElementById('view-story').classList.add('hidden');
+        document.getElementById('view-drawing').classList.add('hidden'); // 修正：隱藏原本的抽籤/戰鬥畫面
         document.getElementById('view-grand-finale').classList.remove('hidden');
         
         // 確保在畫面切換後才捲動
