@@ -619,7 +619,7 @@
         const receiver = drawOrder[(currentIndex + 1) % drawOrder.length];
         
         let scenario;
-        document.getElementById('gift-box-area').classList.remove('hidden');
+        document.getElementById('gift-box-area').classList.add('hidden'); // 修正：應確保隱藏禮物盒
         document.getElementById('reveal-area').classList.add('hidden');
         document.getElementById('battle-result-area').classList.add('hidden');
         
