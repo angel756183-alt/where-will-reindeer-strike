@@ -277,6 +277,20 @@
         </div>
     </div>
 
+    <div id="instruction-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm fade-in">
+        <div class="bg-gray-900 border border-yellow-500/50 p-6 rounded-xl shadow-2xl max-w-sm w-full text-center relative">
+            <h3 class="text-xl font-bold text-yellow-300 mb-4">📜 造劫規則說明</h3>
+            <p class="text-white mb-6 text-left leading-relaxed text-sm">
+                當<span class="text-green-400 font-bold">渡劫者</span>「滿意」<span class="text-red-400 font-bold">造劫者</span>給的災難時，造劫者將成功擊敗麋鹿獸！<br><br>
+                若「不滿意」，造劫者將會被麋鹿獸反擊...<br><br>
+                (此訊息只會出現一次)
+            </p>
+            <button onclick="closeInstructionModal()" class="w-full py-3 rounded-lg bg-yellow-500 hover:bg-yellow-400 text-black font-bold shadow-lg shadow-yellow-500/20">
+                了解，開始挑戰！
+            </button>
+        </div>
+    </div>
+
 </div>
 
 <script>
@@ -608,9 +622,28 @@
     }
 
     function revealReceiver() {
+        // 檢查是否顯示過教學
+        const hasShown = localStorage.getItem('xmasInstructionShown');
+        
+        if (!hasShown) {
+            document.getElementById('instruction-modal').classList.remove('hidden');
+            return;
+        }
+
+        performReveal();
+    }
+
+    function closeInstructionModal() {
+        localStorage.setItem('xmasInstructionShown', 'true');
+        document.getElementById('instruction-modal').classList.add('hidden');
+        performReveal();
+    }
+
+    function performReveal() {
         const receiver = drawOrder[(currentIndex + 1) % drawOrder.length];
         document.getElementById('gift-box-area').classList.add('hidden');
         document.getElementById('reveal-area').classList.remove('hidden');
+        // document.getElementById('debug-info').innerText = `Debug: ${receiver}`; // 移除 debug
         document.getElementById('current-receiver').innerText = receiver;
         
         const imgPath = getHeroImage(receiver);
@@ -780,10 +813,11 @@
     }
 
     function confirmReset() {
-        localStorage.removeItem('xmasState');
         localStorage.removeItem('xmasParticipants');
-        localStorage.removeItem('xmasCouple');
         localStorage.removeItem('xmasGender');
+        localStorage.removeItem('xmasCouple');
+        localStorage.removeItem('xmasState');
+        localStorage.removeItem('xmasInstructionShown'); // 清除教學紀錄
         location.reload();
     }
 
