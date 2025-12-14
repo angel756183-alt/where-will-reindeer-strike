@@ -89,20 +89,6 @@
             100% { transform: scale(1.5); opacity: 0; }
         }
         
-        
-        /* 聖誕氣氛燈特效 */
-        .christmas-lights-border {
-            animation: christmasGlow 2s infinite alternate;
-            border-width: 2px;
-            box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
-        }
-        @keyframes christmasGlow {
-            0% { border-color: #ff0000; box-shadow: 0 0 10px #ff0000, 0 0 20px #ff0000; background-color: rgba(50, 0, 0, 0.6); color: #fff; }
-            33% { border-color: #ffd700; box-shadow: 0 0 10px #ffd700, 0 0 20px #ffd700; background-color: rgba(50, 50, 0, 0.6); color: #ffeb3b; }
-            66% { border-color: #00ff00; box-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00; background-color: rgba(0, 50, 0, 0.6); color: #fff; }
-            100% { border-color: #ff0000; box-shadow: 0 0 10px #ff0000, 0 0 20px #ff0000; background-color: rgba(50, 0, 0, 0.6); color: #fff; }
-        }
-        
         .shake-light { animation: shakeLight 0.2s infinite; }
         @keyframes shakeLight { 0% { transform: translate(1px, 0); } 50% { transform: translate(-1px, 0); } 100% { transform: translate(0, 0); } }
 
@@ -174,8 +160,8 @@
 
     <div id="view-drawing" class="hidden flex-1 flex flex-col fade-in z-20 h-full">
         <div class="text-center mb-2 flex justify-between items-center px-4">
-            <div class="christmas-lights-border px-4 py-1.5 rounded-full text-xs font-bold tracking-wider transition-all duration-500">
-                🎄 Round <span id="round-number">1</span> 🎄
+            <div class="bg-blue-900/80 px-3 py-1 rounded-full text-xs border border-blue-400">
+                Round <span id="round-number">1</span>
             </div>
             <h2 class="text-lg font-bold">
                 贈禮者：<span id="current-giver" class="text-yellow-300">英雄A</span>
@@ -310,6 +296,25 @@
         "monster_dead_scarf_close.jpg", 
         "monster_dead_broken.jpg"        
     ];
+
+    // 英雄必殺技名單
+    const heroAttacks = {
+        '智堯': '用筆電寫出的無窮迴圈程式碼，讓兇猛狂暴的聖誕麋鹿獸大腦直接當機！',
+        '冠宇': '利用登山鞋噴射上空後向下俯衝，用尖若磐石的登山杖打掉麋鹿獸的鹿角！',
+        '晨豪': '帶領泰國美女軍團，使用「薩瓦迪卡光波」閃瞎麋鹿獸！',
+        '士家': '集結全家人的愛，派出「超人白貓」使出瘋狂亂抓，麋鹿獸痛得嗷嗷叫！',
+        '銘瑋': '推了一下眼鏡，用「富士山急凍光波」把麋鹿獸變成冰棒！',
+        '佳瑜': '柯基犬使出「飛天兇猛咬咬攻擊」，精準咬住麋鹿獸的腳踝！',
+        '念慈': '在異國市集中施展幻術，派「賓士貓刺客」偷走麋鹿獸的便當！',
+        '育姍': '用演唱會等級的應援吼叫聲，把麋鹿獸震飛到外太空！',
+        '英筑': '召喚「長腿歐巴護衛隊」，施展好帥好帥攻擊，讓麋鹿獸招架不住！',
+        '惠子': '召喚極圈「歐若拉之光」，絢麗極光讓麋鹿獸暈頭轉向，差點撞上樹！',
+        '紫璇': '與狗狗超人召喚魔幻舞台，將兇猛麋鹿獸甩回森林！',
+        '柏茵': '與吉祥物們用閃亮歌聲開唱，麋鹿獸聽得頭昏腦脹、口吐白沫！',
+        '敏毓': '穿梭都市大樓間，用「火焰披風迴旋」把麋鹿獸烤成了二分熟！',
+        '亭潔': '在櫻花雨中指派「灰貓超人」施展貓貓連環攻擊，麋鹿獸已經暈頭轉向！',
+        '詠筑': '指揮身後「萌寵大軍」撲向前方，麋鹿獸快被融化，變成萌萌小鹿！'
+    };
 
     // 預設名單
     const defaultParticipants = [
@@ -637,7 +642,14 @@
             
             if (isSatisfied) {
                 // 勝利
-                scenario = victoryScenarios[Math.floor(Math.random() * victoryScenarios.length)];
+                const specificAttack = heroAttacks[giver];
+                
+                if (specificAttack) {
+                    scenario = { emoji: '✨', text: specificAttack };
+                } else {
+                    scenario = victoryScenarios[Math.floor(Math.random() * victoryScenarios.length)];
+                }
+                
                 battleText.innerText = scenario.text;
                 effectOverlay.innerText = scenario.emoji;
                 
