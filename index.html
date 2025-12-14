@@ -252,7 +252,7 @@
     </div>
 
     <div id="view-grand-finale" class="hidden flex-1 flex flex-col items-center justify-center fade-in z-20 pb-10">
-        <h2 class="text-4xl font-bold text-yellow-300 mb-6 drop-shadow-lg glitch-text">🏆 戰役最終結果 🏆</h2>
+        <!-- <h2 class="text-4xl font-bold text-yellow-300 mb-6 drop-shadow-lg glitch-text">🏆 戰役最終結果 🏆</h2> (已隱藏) -->
         
         <div class="flex items-center gap-8 mb-6 text-2xl font-bold bg-black/40 p-4 rounded-xl border border-white/20">
             <div class="text-center">
@@ -271,7 +271,7 @@
         </div>
 
         <button onclick="showResultsList()" class="bg-gradient-to-r from-yellow-600 to-amber-700 hover:from-yellow-500 hover:to-amber-600 text-white font-bold py-4 px-10 rounded-full text-xl shadow-lg ring-2 ring-yellow-500/50 animate-pulse">
-            📊 點我觀看戰役紀錄
+            📊 點我觀看戰役紀錄 📊
         </button>
     </div>
 
@@ -655,7 +655,7 @@
         // 檢查是否為最後一局 (第15局)
         const nextBtn = document.getElementById('next-round-btn');
         if (currentIndex === participants.length - 1) {
-            nextBtn.innerText = "📜 公布戰役結果";
+            nextBtn.innerText = "📜 公布戰役結果 📜";
             nextBtn.classList.remove('bg-yellow-500', 'hover:bg-yellow-400');
             nextBtn.classList.add('bg-red-600', 'hover:bg-red-500', 'text-white'); // 改成顯眼的紅色
         } else {
@@ -772,27 +772,28 @@
                     scenario = victoryScenarios[Math.floor(Math.random() * victoryScenarios.length)];
                 }
                 
-                battleText.innerText = scenario.text;
-                effectOverlay.innerText = scenario.emoji;
                 
-                playSound('sword');
-                effectOverlay.classList.add('effect-hit');
-                playSound('win');
+                battleText.innerText = scenario.text;
+                // effectOverlay.innerText = scenario.emoji; // 移除特效
+                
+                // playSound('sword'); // 移除音效
+                // effectOverlay.classList.add('effect-hit'); // 移除特效動畫
+                // playSound('win'); // 移除音效
 
             } else {
                 // 失敗
                 const specificDefeat = heroDefeats[giver];
                 
                 if (specificDefeat) {
-                    scenario = { emoji: '😨', text: specificDefeat }; // 使用驚恐表情
+                    scenario = { emoji: '😨', text: specificDefeat }; 
                 } else {
                     scenario = defeatScenarios[Math.floor(Math.random() * defeatScenarios.length)];
                 }
                 
                 battleText.innerText = scenario.text;
                 
-                playSound('attack'); 
-                playSound('hit');
+                // playSound('attack'); // 移除音效
+                // playSound('hit'); // 移除音效
                 heroImg.classList.remove('hero-idle');
                 
                 const deaths = ['hero-fly-away', 'hero-dead', 'hero-flatten', 'hero-spiral', 'hero-drop'];
