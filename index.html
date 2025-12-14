@@ -820,9 +820,13 @@
     }
     
     function showGrandFinale() {
-        window.scrollTo(0, 0); // 確保捲動到最上方
         document.getElementById('view-story').classList.add('hidden');
         document.getElementById('view-grand-finale').classList.remove('hidden');
+        
+        // 確保在畫面切換後才捲動
+        setTimeout(() => {
+            window.scrollTo({ top: 0, behavior: 'auto' });
+        }, 10);
         
         let heroWins = 0;
         let monsterWins = 0;
@@ -850,11 +854,15 @@
     }
 
     function showResultsList() {
-        window.scrollTo(0, 0); // 確保捲動到最上方
         document.getElementById('view-grand-finale').classList.add('hidden');
         showView('view-result');
         renderResults(battleHistory);
         localStorage.setItem('xmasState', JSON.stringify({ step: 'result', battleHistory: battleHistory }));
+
+        // 確保在畫面切換後才捲動
+        setTimeout(() => {
+            window.scrollTo({ top: 0, behavior: 'auto' });
+        }, 10);
     }
 
     function renderResults(history) {
