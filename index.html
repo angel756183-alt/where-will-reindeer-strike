@@ -197,8 +197,13 @@
         <div id="battle-result-area" class="hidden flex-1 flex flex-col justify-between py-4 relative">
             
             <div class="flex-1 flex items-center justify-center relative z-20">
-                <div class="w-52 h-52 relative">
-                    <img src="icon.jpg" id="monster-img" class="w-full h-full rounded-full object-cover object-top border-4 border-red-500 shadow-[0_0_30px_rgba(255,0,0,0.5)] z-10 relative transition-transform">
+                <div class="w-full h-64 relative flex items-center justify-center">
+                    <!-- 圖片模式 (預設隱藏，影片播放失敗時備用或舊有邏輯) -->
+                    <img src="icon.jpg" id="monster-img" class="hidden w-52 h-52 rounded-full object-cover object-top border-4 border-red-500 shadow-[0_0_30px_rgba(255,0,0,0.5)] z-10 relative transition-transform">
+                    
+                    <!-- 影片播放區 -->
+                    <video id="battle-video" class="w-full h-full object-contain rounded-xl shadow-2xl z-30" playsinline webkit-playsinline></video>
+                    
                     <div id="effect-overlay" class="absolute inset-0 flex items-center justify-center text-9xl z-50 pointer-events-none opacity-0">💥</div>
                 </div>
             </div>
@@ -296,14 +301,14 @@
     const defaultParticipants = [
         '晨豪', '佳瑜', '念慈', '詠筑', '惠子', 
         '亭潔', '士家', '冠宇', '敏毓', '柏茵', 
-        '英筑', '紫璇', '智堯', '銘緯', '育姍'
+        '英筑', '紫璇', '智堯', '銘瑋', '育姍'
     ];
     
     // 性別資料 (注意：詠筑設為F)
     const genderData = {
         '晨豪': 'M', '佳瑜': 'F', '念慈': 'F', '詠筑': 'F', '惠子': 'F',
         '亭潔': 'F', '士家': 'M', '冠宇': 'M', '敏毓': 'F', '柏茵': 'F',
-        '英筑': 'F', '紫璇': 'F', '智堯': 'M', '銘緯': 'M', '育姍': 'F'
+        '英筑': 'F', '紫璇': 'F', '智堯': 'M', '銘瑋': 'M', '育姍': 'F'
     };
 
     // --- 英雄照片對應 ---
@@ -312,7 +317,7 @@
         '冠宇': 'boy_b.jpg', 
         '晨豪': 'boy_c.jpg', 
         '士家': 'boy_d.jpg',
-        '銘緯': 'boy_e.jpg'
+        '銘瑋': 'boy_e.jpg'
     };
 
     const femaleGroupMap = {
@@ -516,6 +521,15 @@
         document.getElementById('reveal-area').classList.add('hidden');
         document.getElementById('battle-result-area').classList.add('hidden');
         
+        document.getElementById('gift-box-area').classList.remove('hidden');
+        document.getElementById('reveal-area').classList.add('hidden');
+        document.getElementById('battle-result-area').classList.add('hidden');
+        
+        const videoElement = document.getElementById('battle-video');
+        videoElement.classList.add('hidden');
+        videoElement.pause();
+        videoElement.src = ""; // 清空來源
+
         const monsterImg = document.getElementById('monster-img');
         const heroImg = document.getElementById('hero-img');
         const effectOverlay = document.getElementById('effect-overlay');
@@ -557,7 +571,17 @@
         const receiver = drawOrder[(currentIndex + 1) % drawOrder.length];
         
         let scenario;
+        document.getElementById('gift-box-area').classList.remove('hidden');
+        document.getElementById('reveal-area').classList.add('hidden');
+        document.getElementById('battle-result-area').classList.add('hidden');
+        
+        const videoElement = document.getElementById('battle-video');
+        videoElement.classList.add('hidden');
+        videoElement.pause();
+        videoElement.src = ""; // 清空來源
+
         const monsterImg = document.getElementById('monster-img');
+        const videoElement = document.getElementById('battle-video');
         const heroImg = document.getElementById('hero-img');
         const effectOverlay = document.getElementById('effect-overlay');
         const battleText = document.getElementById('battle-text');
@@ -577,45 +601,50 @@
         
         if (!isSatisfied) heroImg.classList.add('shake-light');
 
+        // 取得基礎檔名 (去掉 .jpg 後綴)
+        const baseImage = getHeroImage(giver);
+        // 如果是 boy_a.jpg -> boy_a
+        const baseName = baseImage.replace('.jpg', '');
+        
+        const videoName = isSatisfied ? `${baseName}_win.mp4` : `${baseName}_lose.mp4`;
+
+        // 重置並播放影片
+        monsterImg.classList.add('hidden'); // 隱藏原本的麋鹿圖
+        videoElement.classList.remove('hidden');
+        videoElement.src = videoName;
+        videoElement.play().catch(e => {
+            console.log("影片播放失敗 (可能是檔案不存在)", e);
+            // 如果影片播放失敗 (例如檔案沒上傳)，可以考慮顯示回原本的圖
+            // 但依需求先保留影片框
+        });
+
         setTimeout(() => {
             heroImg.classList.remove('shake-light');
             
             if (isSatisfied) {
-                // 勝利：隨機戰敗圖
+                // 勝利
                 scenario = victoryScenarios[Math.floor(Math.random() * victoryScenarios.length)];
                 battleText.innerText = scenario.text;
                 effectOverlay.innerText = scenario.emoji;
                 
                 playSound('sword');
                 effectOverlay.classList.add('effect-hit');
-                
-                setTimeout(() => {
-                    monsterImg.src = getRandomImage('dead');
-                    monsterImg.classList.add('monster-die');
-                    playSound('win');
-                }, 300);
+                playSound('win');
 
             } else {
-                // 失敗：隨機生氣圖 (這裡修改為：麋鹿原地暴怒)
+                // 失敗
                 scenario = defeatScenarios[Math.floor(Math.random() * defeatScenarios.length)];
                 battleText.innerText = scenario.text;
                 
                 playSound('attack'); 
+                playSound('hit');
+                heroImg.classList.remove('hero-idle');
                 
-                monsterImg.src = getRandomImage('angry');
-                // 使用新的 class: monster-enrage (原地變紅變大)
-                monsterImg.classList.add('monster-enrage'); 
+                const deaths = ['hero-fly-away', 'hero-dead', 'hero-flatten', 'hero-spiral', 'hero-drop'];
+                const randomDeath = deaths[Math.floor(Math.random() * deaths.length)];
+                heroImg.classList.add(randomDeath);
                 
-                setTimeout(() => {
-                    playSound('hit');
-                    heroImg.classList.remove('hero-idle');
-                    
-                    const deaths = ['hero-fly-away', 'hero-dead', 'hero-flatten', 'hero-spiral', 'hero-drop'];
-                    const randomDeath = deaths[Math.floor(Math.random() * deaths.length)];
-                    heroImg.classList.add(randomDeath);
-                    
-                    document.getElementById('hero-damage-overlay').classList.add('anim-damage');
-                }, 500); 
+                document.getElementById('hero-damage-overlay').classList.add('anim-damage');
             }
 
             battleHistory.push({ giver, receiver, isSatisfied, scenario });
