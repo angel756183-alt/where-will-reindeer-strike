@@ -181,14 +181,14 @@
             
             <div class="w-full bg-white/10 backdrop-blur rounded-xl p-6 border border-white/20">
                 <p class="text-center mb-4 text-lg font-bold">英雄是否滿意？</p>
-                <div class="grid grid-cols-2 gap-4">
-                    <button onclick="handleFeedback(true)" class="bg-green-600 hover:bg-green-500 py-4 px-2 rounded-xl font-bold flex flex-col items-center justify-center gap-2 transform active:scale-95 transition shadow-lg border-b-4 border-green-800 h-full">
-                        <span class="text-3xl">⚔️</span>
-                        <span id="satisfied-text" class="text-sm text-center leading-tight">滿意</span>
+                <div class="grid grid-cols-2 gap-4 h-32">
+                    <button onclick="handleFeedback(true)" class="bg-gradient-to-br from-emerald-600 to-green-800 hover:from-emerald-500 hover:to-green-700 text-white py-4 px-2 rounded-xl font-bold flex flex-col items-center justify-center gap-2 transform active:scale-95 transition shadow-[0_4px_0_rgb(6,78,59),0_10px_15px_-3px_rgba(0,0,0,0.3)] border border-emerald-400/30 h-full">
+                        <span class="text-3xl filter drop-shadow">🎄</span>
+                        <span id="satisfied-text" class="text-sm text-center leading-tight drop-shadow-md">滿意</span>
                     </button>
-                    <button onclick="handleFeedback(false)" class="bg-red-600 hover:bg-red-500 py-4 px-2 rounded-xl font-bold flex flex-col items-center justify-center gap-2 transform active:scale-95 transition shadow-lg border-b-4 border-red-800 h-full">
-                        <span class="text-3xl">😱</span>
-                        <span id="dissatisfied-text" class="text-sm text-center leading-tight">不滿意</span>
+                    <button onclick="handleFeedback(false)" class="bg-gradient-to-br from-red-700 to-rose-900 hover:from-red-600 hover:to-rose-800 text-white py-4 px-2 rounded-xl font-bold flex flex-col items-center justify-center gap-2 transform active:scale-95 transition shadow-[0_4px_0_rgb(136,19,55),0_10px_15px_-3px_rgba(0,0,0,0.3)] border border-rose-400/30 h-full">
+                        <span class="text-3xl filter drop-shadow">🎅</span>
+                        <span id="dissatisfied-text" class="text-sm text-center leading-tight drop-shadow-md">不滿意</span>
                     </button>
                 </div>
             </div>
