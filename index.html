@@ -92,11 +92,50 @@
         .shake-light { animation: shakeLight 0.2s infinite; }
         @keyframes shakeLight { 0% { transform: translate(1px, 0); } 50% { transform: translate(-1px, 0); } 100% { transform: translate(0, 0); } }
 
+        /* 新增禮物盒搖晃動畫 (Wobble) */
+        .gift-shake { animation: giftShake 0.5s infinite; }
+        @keyframes giftShake {
+            0% { transform: rotate(0deg); }
+            25% { transform: rotate(5deg); }
+            50% { transform: rotate(0deg); }
+            75% { transform: rotate(-5deg); }
+            100% { transform: rotate(0deg); }
+        }
+
+        /* 溫和閃爍 */
+        .animate-pulse-gentle { animation: pulseGentle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulseGentle {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.02); }
+        }
+
+
+        /* 秋風落葉遮罩 (憂傷但唯美) */
+        .autumn-overlay {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle, transparent 40%, rgba(139, 69, 19, 0.4) 90%); /* 深褐色 */
+            z-index: 40;
+            animation: pulseAutumn 4s infinite ease-in-out;
+            pointer-events: none;
+        }
+        @keyframes pulseAutumn {
+            0%, 100% { opacity: 0.6; filter: sepia(0.5); }
+            50% { opacity: 0.8; filter: sepia(0.8); }
+        }
+
     </style>
 </head>
 <body class="min-h-screen bg-gradient-to-br from-red-900 via-green-900 to-blue-900 text-white select-none">
 
 <div id="app" class="max-w-md mx-auto min-h-screen p-4 flex flex-col relative overflow-hidden">
+    <canvas id="confetti-canvas" class="fixed inset-0 pointer-events-none z-50 hidden"></canvas>
+    <!-- 背景音樂 -->
+    <audio id="bgm" src="start.mp3" loop></audio>
+    <audio id="gift-sound" src="opengift.mp3"></audio> <!-- 新增禮物音效 -->
+    <button id="music-btn" onclick="toggleMusic()" class="fixed top-4 right-4 z-50 text-2xl bg-black/30 w-10 h-10 rounded-full border border-white/20 flex items-center justify-center opacity-50 hover:opacity-100 transition">
+        🔇
+    </button>
     
     <header class="text-center py-4 mb-2 z-10">
         <div class="w-40 h-40 mx-auto mb-2 rounded-full overflow-hidden border-4 border-yellow-400 shadow-lg relative bg-black/20">
@@ -168,6 +207,7 @@
             </div>
             <h2 class="text-lg font-bold">
                 造劫者：<span id="current-giver" class="text-yellow-300">英雄A</span>
+                <button onclick="debugSkipToFinale()" class="ml-2 text-sm opacity-20 hover:opacity-100" title="跳關">⏭️</button>
             </h2>
         </div>
 
@@ -222,7 +262,7 @@
                     <img src="icon.jpg" id="monster-img" class="hidden w-40 h-40 rounded-full object-cover object-top border-4 border-red-500 shadow-[0_0_30px_rgba(255,0,0,0.5)] z-10 relative transition-transform">
                     
                     <!-- 影片播放區 (縮小顯示) -->
-                    <video id="battle-video" class="w-full h-full object-contain rounded-xl shadow-2xl z-30 max-h-[60vh]" playsinline webkit-playsinline></video>
+                    <video id="battle-video" class="w-full h-full object-contain rounded-xl z-30 max-h-[60vh]" playsinline webkit-playsinline></video>
                     
                     <div id="effect-overlay" class="absolute inset-0 flex items-center justify-center text-9xl z-50 pointer-events-none opacity-0">💥</div>
                 </div>
@@ -269,16 +309,16 @@
         </div>
 
         <div class="w-full max-w-4xl h-[60vh] relative flex items-center justify-center mb-8">
-            <video id="final-video" class="w-full h-full object-contain rounded-xl shadow-2xl" playsinline webkit-playsinline controls></video>
+            <video id="final-video" class="w-full h-full object-contain rounded-xl" playsinline webkit-playsinline></video>
         </div>
 
-        <button onclick="showResultsList()" class="bg-gradient-to-r from-yellow-600 to-amber-700 hover:from-yellow-500 hover:to-amber-600 text-white font-bold py-4 px-10 rounded-full text-xl shadow-lg ring-2 ring-yellow-500/50 animate-pulse">
-            📊 點我觀看戰役紀錄 📊
+        <button onclick="showResultsList()" class="bg-gradient-to-r from-yellow-600 to-amber-700 hover:from-yellow-500 hover:to-amber-600 text-white font-bold py-2 px-6 rounded-full text-base shadow-lg transition-transform hover:scale-105 border border-yellow-500/30 animate-pulse-gentle">
+            📊 觀看戰役紀錄
         </button>
     </div>
 
     <div id="view-result" class="hidden flex-1 fade-in z-20 pb-10">
-        <h2 class="text-2xl font-bold text-center mb-6 text-yellow-300">📜 戰役紀錄</h2>
+        <h2 class="text-2xl font-bold text-center mb-6 text-yellow-300">📜 戰役紀錄 📜</h2>
         
         <div class="bg-white/90 text-gray-900 rounded-xl shadow-2xl overflow-hidden mb-4">
             <div class="max-h-[60vh] overflow-y-auto" id="final-list">
@@ -316,12 +356,90 @@
             </button>
         </div>
     </div>
+    
+    <script>
+    function debugSkipToFinale() {
+        if (battleHistory.length >= participants.length - 1) return;
+        
+        // 補齊前面的紀錄 (模擬)
+        const targetIndex = participants.length - 1;
+        for (let i = currentIndex; i < targetIndex; i++) {
+            const giver = drawOrder[i];
+            const receiver = drawOrder[(i + 1) % drawOrder.length];
+            const isSatisfied = Math.random() > 0.5;
+            const scenario = isSatisfied 
+                ? { emoji: '🏎️', text: '快速通關生成的勝利！' } 
+                : { emoji: '🛌', text: '快速通關生成的失敗...' };
+            
+            battleHistory.push({ giver, receiver, isSatisfied, scenario });
+        }
+        
+        currentIndex = targetIndex;
+        setupRound();
+    }
+    </script>
 
 </div>
 
 <script>
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    // 音樂控制
+    // 音樂控制
+    const bgm = document.getElementById('bgm');
+    let isMusicPlaying = false;
+    // 初始化時讀取使用者偏好，預設為開啟 (false)
+    let userMuted = localStorage.getItem('xmasUserMuted') === 'true';
+
+    // 如果使用者設定靜音，初始化時就加上 muted 屬性 (雖然 bgm 用 js 控制，但保持一致好)
+    if (userMuted) bgm.muted = true;
+    updateMusicBtn(); // 初始化按鈕狀態
+
+    function playBGM() {
+        if (userMuted) return; // 如果使用者手動靜音，就不自動播放
+
+        if (!isMusicPlaying) {
+            bgm.play().then(() => {
+                isMusicPlaying = true;
+                updateMusicBtn();
+            }).catch(e => console.log("等待使用者互動以播放音樂"));
+        } else if (bgm.paused) {
+             // 如果狀態是 playing 但實際暫停 (例如切換 src 後)
+             bgm.play().then(() => updateMusicBtn());
+        }
+    }
+
+    function toggleMusic() {
+        if (bgm.paused || bgm.muted) {
+            // 開啟音樂
+            bgm.muted = false;
+            userMuted = false;
+            localStorage.setItem('xmasUserMuted', 'false');
+            bgm.play();
+            isMusicPlaying = true;
+        } else {
+            // 關閉音樂
+            bgm.pause();
+            userMuted = true;
+            localStorage.setItem('xmasUserMuted', 'true');
+            isMusicPlaying = false;
+        }
+        updateMusicBtn();
+    }
+
+    function updateMusicBtn() {
+        const btn = document.getElementById('music-btn');
+        btn.classList.remove('hidden'); 
+        // 依據 userMuted 顯示狀態
+        btn.innerText = userMuted ? '🔇' : '🔊';
+        // 只有在播放且沒靜音時才跳動
+        const isActuallyPlaying = !bgm.paused && !userMuted;
+        btn.classList.toggle('animate-pulse', isActuallyPlaying);
+    }
+    
+
     function playSound(type) {
+        if (userMuted) return; // 遵守靜音設定
         if (audioCtx.state === 'suspended') audioCtx.resume();
         const osc = audioCtx.createOscillator();
         const gainNode = audioCtx.createGain();
@@ -368,7 +486,7 @@
         '英筑': '召喚「長腿歐巴護衛隊」，施展好帥好帥攻擊，讓麋鹿獸招架不住！',
         '惠子': '召喚極圈「歐若拉之光」，絢麗極光讓麋鹿獸暈頭轉向，差點撞上樹！',
         '紫璇': '與狗狗超人召喚魔幻舞台，將兇猛麋鹿獸甩回森林！',
-        '柏茵': '與吉祥物們用閃亮歌聲開唱，麋鹿獸聽得頭昏腦脹、口吐白沫！',
+        '柏茵': '與吉祥物們用閃亮歌聲開始現場演唱，麋鹿獸聽得頭昏腦脹、口吐白沫！',
         '敏毓': '穿梭都市大樓間，用「火焰披風迴旋」把麋鹿獸烤成了二分熟！',
         '亭潔': '在櫻花雨中指派「灰貓超人」施展貓貓連環攻擊，麋鹿獸已經暈頭轉向！',
         '詠筑': '指揮身後「萌寵大軍」撲向前方，麋鹿獸快被融化，變成萌萌小鹿！'
@@ -562,6 +680,9 @@
         if (participants.length < 3) return alert('人數不足！');
         if (!generateDrawOrder()) return alert('無法生成有效順序');
         showView('view-story');
+        // 切換到戰鬥音樂
+        bgm.src = 'war.mp3';
+        playBGM(); 
     }
 
     function generateDrawOrder() {
@@ -600,6 +721,11 @@
     function enterDraw() {
         showView('view-drawing');
         setupRound();
+        // 確保戰鬥音樂播放 (如果是重整後回來，可能需要切換)
+        if (!bgm.src.includes('war.mp3')) {
+            bgm.src = 'war.mp3';
+        }
+        playBGM(); 
     }
 
     function getHeroImage(name) {
@@ -628,6 +754,11 @@
         document.getElementById('gift-box-area').classList.remove('hidden');
         document.getElementById('reveal-area').classList.add('hidden');
         document.getElementById('battle-result-area').classList.add('hidden');
+        
+        // 恢復背景音樂 (如果被暫停且是戰鬥狀態)
+        if (!userMuted && bgm.paused && bgm.src.includes('war.mp3')) {
+            bgm.play().then(() => updateMusicBtn()).catch(console.error);
+        }
         
         const videoElement = document.getElementById('battle-video');
         videoElement.classList.add('hidden');
@@ -687,20 +818,37 @@
 
     function performReveal() {
         const receiver = drawOrder[(currentIndex + 1) % drawOrder.length];
-        document.getElementById('gift-box-area').classList.add('hidden');
-        document.getElementById('reveal-area').classList.remove('hidden');
-        // document.getElementById('debug-info').innerText = `Debug: ${receiver}`; // 移除 debug
-        document.getElementById('current-receiver').innerText = receiver;
         
-        const imgPath = getHeroImage(receiver);
-        document.getElementById('hero-img').src = imgPath;
-        document.getElementById('battle-hero-name').innerText = receiver;
+        // 1. 播放音效並設定延遲
+        let delay = 500; // 靜音時稍微停頓一下
+        if (!userMuted) {
+            const giftAudio = document.getElementById('gift-sound');
+            giftAudio.currentTime = 0;
+            giftAudio.play().catch(e => console.log("音效播放失敗", e));
+            delay = 2500; // 有音樂時，等待 2.5 秒讓音樂播一會兒
+        }
 
-        const satisfiedTexts = ["我超滿意！<br>開啟英雄攻擊", "滿意，守護城市"];
-        document.getElementById('satisfied-text').innerHTML = satisfiedTexts[Math.floor(Math.random() * satisfiedTexts.length)];
+        // 2. 增加等待時的動畫回饋
+        const giftBox = document.getElementById('gift-box-area');
+        giftBox.classList.add('gift-shake'); // 改用自定義搖晃
 
-        const dissatisfiedTexts = ["有點失望…看看麋鹿反擊", "不滿意，危機降臨"];
-        document.getElementById('dissatisfied-text').innerHTML = dissatisfiedTexts[Math.floor(Math.random() * dissatisfiedTexts.length)];
+        // 3. 延遲顯示結果
+        setTimeout(() => {
+            giftBox.classList.remove('gift-shake');
+            giftBox.classList.add('hidden');
+            document.getElementById('reveal-area').classList.remove('hidden');
+            
+            document.getElementById('current-receiver').innerText = receiver;
+            
+            const imgPath = getHeroImage(receiver);
+            document.getElementById('hero-img').src = imgPath;
+            document.getElementById('battle-hero-name').innerText = receiver;
+
+            const satisfiedTexts = ["我超滿意！<br>開啟英雄攻擊", "滿意<br>守護城市"];
+            document.getElementById('satisfied-text').innerHTML = satisfiedTexts[Math.floor(Math.random() * satisfiedTexts.length)];
+            const dissatisfiedTexts = ["有點失望<br>看看麋鹿反擊", "不滿意<br>危機降臨"];
+            document.getElementById('dissatisfied-text').innerHTML = dissatisfiedTexts[Math.floor(Math.random() * dissatisfiedTexts.length)];
+        }, delay);
     }
 
     function handleFeedback(isSatisfied) {
@@ -708,8 +856,6 @@
         const receiver = drawOrder[(currentIndex + 1) % drawOrder.length];
         
         let scenario;
-        document.getElementById('gift-box-area').classList.add('hidden'); // 修正：應確保隱藏禮物盒
-        document.getElementById('reveal-area').classList.add('hidden');
         document.getElementById('battle-result-area').classList.add('hidden');
         
         const videoElement = document.getElementById('battle-video');
@@ -731,84 +877,68 @@
         document.getElementById('result-giver').innerText = giver;
         document.getElementById('result-receiver').innerText = receiver;
         
-        if (!isSatisfied) {
-            // 不滿意
-            battleText.innerText = `麋鹿獸覺得禮物太爛，決定改吃掉 ${giver}...`;
-            heroImg.src = getHeroImage(giver);
-            document.getElementById('battle-hero-name').innerText = giver;
+        // 預先計算劇情結果 (Early Calculation)
+        if (isSatisfied) {
+            // 勝利
+            const specificAttack = heroAttacks[giver];
+            if (specificAttack) {
+                scenario = { emoji: '✨', text: specificAttack };
+            } else {
+                scenario = victoryScenarios[Math.floor(Math.random() * victoryScenarios.length)];
+            }
         } else {
-            // 滿意
-            battleText.innerText = "英雄準備反擊...";
+             // 失敗
+             const specificDefeat = heroDefeats[giver];
+             if (specificDefeat) {
+                 scenario = { emoji: '😨', text: specificDefeat }; 
+             } else {
+                 scenario = defeatScenarios[Math.floor(Math.random() * defeatScenarios.length)];
+             }
         }
+
+        // 直接顯示最終結果 (Immediate Display)
+        battleText.innerText = scenario.text;
         
-        if (!isSatisfied) heroImg.classList.add('shake-light');
+        // 設定圖片與基本資訊
+        // if (!isSatisfied) heroImg.classList.add('shake-light'); // 移除搖晃，因為馬上播影片且隱藏圖片了
 
         // 取得基礎檔名 (去掉 .jpg 後綴)
         const baseImage = getHeroImage(giver);
-        // 如果是 boy_a.jpg -> boy_a
         const baseName = baseImage.replace('.jpg', '');
         
         const videoName = isSatisfied ? `${baseName}_win.mp4` : `${baseName}_lose.mp4`;
 
         // 重置並播放影片
-        monsterImg.classList.add('hidden'); // 隱藏原本的麋鹿圖
-        document.getElementById('hero-display-area').classList.add('hidden'); // 隱藏底部英雄圖 (新增)
+        monsterImg.classList.add('hidden'); 
+        document.getElementById('hero-display-area').classList.add('hidden'); // 隱藏底部英雄圖
+        
+        // 暫停背景音樂
+        bgm.pause();
+        updateMusicBtn();
         
         videoElement.classList.remove('hidden');
         videoElement.src = videoName;
         videoElement.play().catch(e => {
-            console.log("影片播放失敗 (可能是檔案不存在)", e);
-            // 如果影片播放失敗，可能需要把原本的圖顯示回來 (但目前先不處理)
+            console.log("影片播放失敗", e);
+             if (!userMuted && bgm.src.includes('war.mp3')) bgm.play();
         });
 
+        // 延遲處理資料儲存 (保留延遲是為了避免瞬間稍微卡頓，雖然JS是單線程但習慣上分開也好)
         setTimeout(() => {
-            heroImg.classList.remove('shake-light');
-            
-            if (isSatisfied) {
-                // 勝利
-                const specificAttack = heroAttacks[giver];
-                
-                if (specificAttack) {
-                    scenario = { emoji: '✨', text: specificAttack };
-                } else {
-                    scenario = victoryScenarios[Math.floor(Math.random() * victoryScenarios.length)];
-                }
-                
-                
-                battleText.innerText = scenario.text;
-                // effectOverlay.innerText = scenario.emoji; // 移除特效
-                
-                // playSound('sword'); // 移除音效
-                // effectOverlay.classList.add('effect-hit'); // 移除特效動畫
-                // playSound('win'); // 移除音效
-
-            } else {
-                // 失敗
-                const specificDefeat = heroDefeats[giver];
-                
-                if (specificDefeat) {
-                    scenario = { emoji: '😨', text: specificDefeat }; 
-                } else {
-                    scenario = defeatScenarios[Math.floor(Math.random() * defeatScenarios.length)];
-                }
-                
-                battleText.innerText = scenario.text;
-                
-                // playSound('attack'); // 移除音效
-                // playSound('hit'); // 移除音效
-                heroImg.classList.remove('hero-idle');
-                
+            // 處理圖片動畫狀態 (雖然目前隱藏，但為了狀態正確性還是執行)
+            heroImg.classList.remove('hero-idle', 'shake-light');
+            if (!isSatisfied) {
                 const deaths = ['hero-fly-away', 'hero-dead', 'hero-flatten', 'hero-spiral', 'hero-drop'];
                 const randomDeath = deaths[Math.floor(Math.random() * deaths.length)];
                 heroImg.classList.add(randomDeath);
-                
                 document.getElementById('hero-damage-overlay').classList.add('anim-damage');
             }
 
             battleHistory.push({ giver, receiver, isSatisfied, scenario });
             localStorage.setItem('xmasState', JSON.stringify({ step: 'drawing', battleHistory: battleHistory }));
 
-        }, 800);
+        }, 100); // 縮短延遲時間
+
     }
 
     function nextRound() {
@@ -830,6 +960,10 @@
         setTimeout(() => {
             window.scrollTo({ top: 0, behavior: 'auto' });
         }, 10);
+        
+        // 暫停背景音樂，專心看結局
+        bgm.pause();
+        updateMusicBtn();
         
         let heroWins = 0;
         let monsterWins = 0;
@@ -854,6 +988,13 @@
         
         // 儲存狀態，確保重整後能回來
         localStorage.setItem('xmasState', JSON.stringify({ step: 'finale', battleHistory: battleHistory }));
+
+        // 觸發特效 (勝利：彩帶 / 失敗：落葉)
+        if (heroWins > monsterWins) {
+            startConfetti();
+        } else if (monsterWins > heroWins) {
+            startFallingLeaves();
+        }
     }
 
     function showResultsList() {
@@ -874,7 +1015,7 @@
         history.forEach((battle) => {
             const div = document.createElement('div');
             div.className = `p-4 border-b border-gray-200 ${battle.isSatisfied ? 'bg-green-50' : 'bg-red-50'}`;
-            const resultText = battle.isSatisfied ? '✅ 成功擊退' : `💀 ${battle.giver} 被吃了`;
+            const resultText = battle.isSatisfied ? '✅ 成功擊退' : `❌ ${battle.giver} 不幸落敗`;
             
             div.innerHTML = `
                 <div class="flex items-center justify-between mb-2">
@@ -917,6 +1058,132 @@
             document.getElementById(v).classList.add('hidden');
         });
         document.getElementById(id).classList.remove('hidden');
+    }
+
+    // --- 簡易彩帶特效 (Confetti) ---
+    function startConfetti() {
+        const canvas = document.getElementById('confetti-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        canvas.classList.remove('hidden');
+
+        const particles = [];
+        const colors = ['#f43f5e', '#fbbf24', '#34d399', '#60a5fa', '#a78bfa', '#ffffff'];
+
+        for (let i = 0; i < 150; i++) {
+            particles.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height - canvas.height,
+                w: Math.random() * 10 + 5,
+                h: Math.random() * 5 + 5,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                speed: Math.random() * 3 + 2,
+                drift: Math.random() * 2 - 1,
+                rotation: Math.random() * 360
+            });
+        }
+
+        let animationId;
+        function loop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.y += p.speed;
+                p.x += p.drift;
+                p.rotation += 2;
+                
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                ctx.rotate(p.rotation * Math.PI / 180);
+                ctx.fillStyle = p.color;
+                ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+                ctx.restore();
+
+                if (p.y > canvas.height) {
+                    p.y = -20;
+                    p.x = Math.random() * canvas.width;
+                }
+            });
+            animationId = requestAnimationFrame(loop);
+        }
+        loop();
+
+        // 8秒後停止
+        setTimeout(() => {
+            cancelAnimationFrame(animationId);
+            canvas.classList.add('hidden');
+        }, 8000);
+    }
+
+    // --- 落葉飄零 (Falling Leaves) ---
+    function startFallingLeaves() {
+        const canvas = document.getElementById('confetti-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        canvas.classList.remove('hidden');
+        
+        // 加入秋日遮罩
+        const app = document.getElementById('app');
+        const overlay = document.createElement('div');
+        overlay.className = 'autumn-overlay fade-in';
+        app.appendChild(overlay);
+
+        const particles = [];
+        const colors = ['#d97706', '#b45309', '#92400e', '#f59e0b', '#78350f']; // 橘、褐、深黃
+
+        for (let i = 0; i < 60; i++) { // 葉子不用太多
+            particles.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                w: Math.random() * 10 + 10,
+                h: Math.random() * 8 + 5,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                speed: Math.random() * 2 + 1, // 飄慢一點
+                drift: Math.random() * 2 - 1,
+                rotation: Math.random() * 360,
+                spinSpeed: Math.random() * 4 - 2 // 旋轉速度
+            });
+        }
+
+        let animationId;
+        function loop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            particles.forEach(p => {
+                p.y += p.speed;
+                p.x += Math.sin(p.y / 100) * 2; // 左右搖擺 (SINE WAVE)
+                p.rotation += p.spinSpeed;
+                
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                ctx.rotate(p.rotation * Math.PI / 180);
+                
+                // 畫葉子形狀 (簡單橢圓)
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.ellipse(0, 0, p.w / 2, p.h / 2, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.restore();
+
+                if (p.y > canvas.height) {
+                    p.y = -20;
+                    p.x = Math.random() * canvas.width;
+                }
+            });
+            animationId = requestAnimationFrame(loop);
+        }
+        loop();
+
+        // 8秒後停止
+        setTimeout(() => {
+            cancelAnimationFrame(animationId);
+            canvas.classList.add('hidden');
+            overlay.classList.remove('fade-in');
+            overlay.classList.add('fade-out'); // 簡單淡出 logic 或直接移除
+            setTimeout(() => overlay.remove(), 1000);
+        }, 8000);
     }
 </script>
 
