@@ -1,5 +1,5 @@
 {
-  "name": "聖誕麋鹿冒險",
+  "name": "要去哪裡擾亂社會",
   "short_name": "聖誕劫",
   "start_url": "index.html",
   "display": "standalone",
@@ -19,3 +19,4 @@
     }
   ]
 }
+
